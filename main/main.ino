@@ -30,13 +30,12 @@ bool autoMode = false;
 int pwmValue = 0;
 float ds18b20Temp = 0.0;
 float am2302Temp = 0.0;
-unsigned long lastUpdate = 0;  // Store the last update time
 
 // Helper function to map temperature to PWM
 int temperatureToPWM(float tempC) {
   if (tempC <= 37.0) return 51;  // 20% of 255
-  if (tempC >= 45.0) return 255; // 100% of 255
-  return map(tempC, 37.0, 45.0, 51, 255);
+  if (tempC >= 41.0) return 255; // 100% of 255
+  return map(tempC, 37.0, 41.0, 51, 255);
 }
 
 void setup() {
@@ -97,15 +96,18 @@ void loop() {
     // Construct the HTML response
     String html = "<html><body>";
     html += "<h1>ESP8266 Web Server</h1>";
+    html += "<h2>Mode: ";
+    html += autoMode ? "Auto" : "Manual";
+    html += "</h2>";
     if (ds18b20Temp == -127.00) {
       html += "<h2>Error reading DS18B20 temperature!</h2>";
     } else {
-      html += "<h2>Current IVT Temperature: " + String(ds18b20Temp) + " &deg;C</h2>";
+      html += "<h2>Ivt: " + String(ds18b20Temp) + " &deg;C";
     }
     if (isnan(am2302Temp)) {
-      html += "<h2>Error reading ENV temperature!</h2>";
+      html += "  Error reading ENV temperature!</h2>";
     } else {
-      html += "<h2>Current ENV Temperature: " + String(am2302Temp) + " &deg;C</h2>";
+      html += "  Env: " + String(am2302Temp) + " &deg;C</h2>";
     }
 
     // Display auto/manual mode button
@@ -133,78 +135,35 @@ void loop() {
     client.stop();
   }
 
-  // Check if 10 seconds have passed to update readings and fan speed
-  unsigned long currentMillis = millis();
-  if (currentMillis - lastUpdate >= 10000) {
-    lastUpdate = currentMillis;
-    
-    // Update the temperature readings
-    ds18b20.requestTemperatures();
-    ds18b20Temp = ds18b20.getTempCByIndex(0);
-    am2302Temp = dht.readTemperature();
-    
-    // Update LCD with temperature readings
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("IVT: " + String(ds18b20Temp) + "C");
-    lcd.setCursor(0, 1);
-    lcd.print("ENV: " + String(am2302Temp) + "C");
-    
-    // Display FAN status
-    lcd.setCursor(0, 1);
-    if (digitalRead(RELAY_PIN) == LOW) {
-      lcd.print("FAN: OFF");
-    } else {
-      int pwmPercentage = (pwmValue * 100) / 255;
-      lcd.print("FAN: " + String(pwmPercentage) + "%");
-    }
+  // Update the temperature readings
+  ds18b20.requestTemperatures();
+  ds18b20Temp = ds18b20.getTempCByIndex(0);
+  am2302Temp = dht.readTemperature();
 
-    // Control fans based on auto/manual mode
-    if (autoMode) {
-      pwmValue = temperatureToPWM(ds18b20Temp);
-      for (int i = 0; i < 4; i++) {
-        analogWrite(PWM1_PIN + i, pwmValue);
-      }
-    }
-
-    // Control relay based on temperature difference
-    if (!isnan(am2302Temp) && ds18b20Temp != -127.00) {
-      if (ds18b20Temp < (am2302Temp - 2)) {
-        digitalWrite(RELAY_PIN, LOW); // Turn off relay
-      } else {
-        digitalWrite(RELAY_PIN, HIGH); // Turn on relay
-      }
-    }
-  }
+  // Update LCD display
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Ivt: ");
+  lcd.print(ds18b20Temp, 1);
+  lcd.print(" C       Env: ");
+  lcd.print(am2302Temp, 1);
+  lcd.print(" C");
+  lcd.setCursor(0, 1);
+  lcd.print("Fan: ");
+  lcd.print(map(pwmValue, 0, 255, 0, 100));
+  lcd.print("%                ");
+  lcd.print(autoMode ? "Auto" : "Manual");
 }
 
 /*
-Connection Wires:
-
-1. DS18B20 Temperature Sensor:
-   - VCC to 3.3V
-   - GND to GND
-   - Data to GPIO14 (D5) with a 4.7k pull-up resistor to 3.3V
-
-2. AM2302 (DHT22) Temperature Sensor:
-   - VCC to 3.3V
-   - GND to GND
-   - Data to GPIO12 (D6)
-
-3. Relay:
-   - VCC to 3.3V
-   - GND to GND
-   - Control to GPIO16 (D0)
-
-4. PWM Fans:
-   - Fan 1 Control to GPIO13 (D7)
-   - Fan 2 Control to GPIO15 (D8)
-   - Fan 3 Control to GPIO3 (RX)
-   - Fan 4 Control to GPIO1 (TX)
-
-5. I2C LCD:
-   - VCC to 3.3V
-   - GND to GND
-   - SDA to GPIO4 (D2)
-   - SCL to GPIO5 (D1)
+Wired Connections:
+- Connect DS18B20 data pin to D5 (GPIO14)
+- Connect DHT22 data pin to D6 (GPIO12)
+- Connect relay to D0 (GPIO16)
+- Connect PWM1 to D7 (GPIO13)
+- Connect PWM2 to D8 (GPIO15)
+- Connect PWM3 to RX (GPIO3)
+- Connect PWM4 to TX (GPIO1)
+- Connect I2C SDA pin to D2 (GPIO4)
+- Connect I2C SCL pin to D1 (GPIO5)
 */
