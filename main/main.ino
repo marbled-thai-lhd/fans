@@ -88,10 +88,6 @@ void loop() {
       autoMode = true;
     } else if (request.indexOf("GET /manual") >= 0) {
       autoMode = false;
-    }
-
-    // Update PWM value if in manual mode
-    if (!autoMode) {
       String pwmParam = "pwm=";
       int pwmStart = request.indexOf(pwmParam) + pwmParam.length();
       int pwmEnd = request.indexOf("&", pwmStart);
@@ -120,18 +116,18 @@ void loop() {
     }
 
     // Display auto/manual mode button
-    html += "<form action=\"/auto\"><input type=\"submit\" value=\"";
+    html += "<form action=\"/";
+    html += autoMode ? "auto" : "manual";
+    html += \"><input type=\"submit\" value=\"";
     html += autoMode ? "Set Manual" : "Set Auto";
     html += "\"></form>";
 
     // Display slider for manual mode
-    if (!autoMode) {
-      html += "<form action=\"/manual\">";
-      html += "PWM: <input type=\"range\" name=\"pwm\" min=\"0\" max=\"255\" value=\"";
-      html += String(pwmValue);
-      html += "\">";
-      html += "<input type=\"submit\" value=\"Set PWM\"></form>";
-    }
+    html += "<form action=\"/manual\">";
+    html += "PWM: <input type=\"range\" name=\"pwm\" min=\"0\" max=\"255\" value=\"";
+    html += String(pwmValue);
+    html += "\">";
+    html += "<input type=\"submit\" value=\"Set PWM\"></form>";
 
     html += "</body></html>";
     
