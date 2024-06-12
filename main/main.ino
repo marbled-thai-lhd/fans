@@ -6,15 +6,15 @@
 #include <LiquidCrystal_I2C.h>
 
 // Pin assignments
-const int DS18B20_PIN = D5;   // GPIO14
-const int DHT22_PIN = D6;     // GPIO12
-const int RELAY_PIN = D0;     // GPIO16
-const int PWM1_PIN = D7;      // GPIO13
-const int PWM2_PIN = D8;      // GPIO15
-const int PWM3_PIN = RX;      // GPIO3
-const int PWM4_PIN = TX;      // GPIO1
-const int I2C_SDA = D2;       // GPIO4
-const int I2C_SCL = D1;       // GPIO5
+const int DS18B20_PIN = 14;   // GPIO14
+const int DHT22_PIN = 12;     // GPIO12
+const int RELAY_PIN = 16;     // GPIO16
+const int PWM1_PIN = 13;      // GPIO13
+const int PWM2_PIN = 15;      // GPIO15
+const int PWM3_PIN = 3;       // GPIO3 (RX)
+const int PWM4_PIN = 1;       // GPIO1 (TX)
+const int I2C_SDA = 4;        // GPIO4 (D2)
+const int I2C_SCL = 5;        // GPIO5 (D1)
 
 OneWire oneWire(DS18B20_PIN);
 DallasTemperature ds18b20(&oneWire);
@@ -30,6 +30,7 @@ bool autoMode = false;
 int pwmValue = 0;
 float ds18b20Temp = 0.0;
 float am2302Temp = 0.0;
+unsigned long lastUpdate = 0;  // Store the last update time
 
 // Helper function to map temperature to PWM
 int temperatureToPWM(float tempC) {
@@ -55,7 +56,7 @@ void setup() {
   server.begin();
   ds18b20.begin();
   dht.begin();
-  lcd.begin();
+  lcd.init();
   lcd.backlight();
   
   pinMode(PWM1_PIN, OUTPUT);
@@ -135,24 +136,46 @@ void loop() {
     client.stop();
   }
 
-  // Update the temperature readings
-  ds18b20.requestTemperatures();
-  ds18b20Temp = ds18b20.getTempCByIndex(0);
-  am2302Temp = dht.readTemperature();
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastUpdate >= 5000) {
+    lastUpdate = currentMillis;
+    
+    // Update the temperature readings
+    ds18b20.requestTemperatures();
+    ds18b20Temp = ds18b20.getTempCByIndex(0);
+    am2302Temp = dht.readTemperature();
+    
+    // Update LCD display
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Ivt: ");
+    lcd.print(ds18b20Temp, 1);
+    lcd.print(" C       Env: ");
+    lcd.print(am2302Temp, 1);
+    lcd.print(" C");
+    lcd.setCursor(0, 1);
+    lcd.print("Fan: ");
+    lcd.print(map(pwmValue, 0, 255, 0, 100));
+    lcd.print("%                ");
+    lcd.print(autoMode ? "Auto" : "Manual");
 
-  // Update LCD display
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print("Ivt: ");
-  lcd.print(ds18b20Temp, 1);
-  lcd.print(" C       Env: ");
-  lcd.print(am2302Temp, 1);
-  lcd.print(" C");
-  lcd.setCursor(0, 1);
-  lcd.print("Fan: ");
-  lcd.print(map(pwmValue, 0, 255, 0, 100));
-  lcd.print("%                ");
-  lcd.print(autoMode ? "Auto" : "Manual");
+    // Control fans based on auto/manual mode
+    if (autoMode) {
+      pwmValue = temperatureToPWM(ds18b20Temp);
+      for (int i = 0; i < 4; i++) {
+        analogWrite(PWM1_PIN + i, pwmValue);
+      }
+    }
+
+    // Control relay based on temperature difference
+    if (!isnan(am2302Temp) && ds18b20Temp != -127.00) {
+      if (ds18b20Temp < (am2302Temp - 2) && ds18b20Temp < 35) {
+        digitalWrite(RELAY_PIN, LOW); // Turn off relay
+      } else {
+        digitalWrite(RELAY_PIN, HIGH); // Turn on relay
+      }
+    }
+  }
 }
 
 /*
