@@ -1,0 +1,210 @@
+#include <ESP8266WiFi.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
+#include <DHT.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+// Pin assignments
+const int DS18B20_PIN = D5;   // GPIO14
+const int DHT22_PIN = D6;     // GPIO12
+const int RELAY_PIN = D0;     // GPIO16
+const int PWM1_PIN = D7;      // GPIO13
+const int PWM2_PIN = D8;      // GPIO15
+const int PWM3_PIN = RX;      // GPIO3
+const int PWM4_PIN = TX;      // GPIO1
+const int I2C_SDA = D2;       // GPIO4
+const int I2C_SCL = D1;       // GPIO5
+
+OneWire oneWire(DS18B20_PIN);
+DallasTemperature ds18b20(&oneWire);
+DHT dht(DHT22_PIN, DHT22);
+LiquidCrystal_I2C lcd(0x27, 16, 2); // Change 0x27 to your LCD's I2C address
+
+// Network settings
+const char* ssid = "your_SSID";
+const char* password = "your_PASSWORD";
+WiFiServer server(80);
+
+bool autoMode = false;
+int pwmValue = 0;
+float ds18b20Temp = 0.0;
+float am2302Temp = 0.0;
+unsigned long lastUpdate = 0;  // Store the last update time
+
+// Helper function to map temperature to PWM
+int temperatureToPWM(float tempC) {
+  if (tempC <= 37.0) return 51;  // 20% of 255
+  if (tempC >= 45.0) return 255; // 100% of 255
+  return map(tempC, 37.0, 45.0, 51, 255);
+}
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+  
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  
+  server.begin();
+  ds18b20.begin();
+  dht.begin();
+  lcd.begin();
+  lcd.backlight();
+  
+  pinMode(PWM1_PIN, OUTPUT);
+  pinMode(PWM2_PIN, OUTPUT);
+  pinMode(PWM3_PIN, OUTPUT);
+  pinMode(PWM4_PIN, OUTPUT);
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW); // Ensure relay is off initially
+}
+
+void loop() {
+  WiFiClient client = server.available();
+  if (client) {
+    // Read the client's request
+    String request = client.readStringUntil('\r');
+    Serial.println(request);
+    client.flush();  // Clear the client's buffer
+    
+    // Check if auto or manual mode is requested
+    if (request.indexOf("GET /auto") >= 0) {
+      autoMode = true;
+    } else if (request.indexOf("GET /manual") >= 0) {
+      autoMode = false;
+    }
+
+    // Update PWM value if in manual mode
+    if (!autoMode) {
+      String pwmParam = "pwm=";
+      int pwmStart = request.indexOf(pwmParam) + pwmParam.length();
+      int pwmEnd = request.indexOf("&", pwmStart);
+      if (pwmEnd == -1) pwmEnd = request.indexOf(" ", pwmStart);
+      pwmValue = request.substring(pwmStart, pwmEnd).toInt();
+      for (int i = 0; i < 4; i++) {
+        analogWrite(PWM1_PIN + i, pwmValue);
+      }
+    }
+
+    // Construct the HTML response
+    String html = "<html><body>";
+    html += "<h1>ESP8266 Web Server</h1>";
+    if (ds18b20Temp == -127.00) {
+      html += "<h2>Error reading DS18B20 temperature!</h2>";
+    } else {
+      html += "<h2>Current IVT Temperature: " + String(ds18b20Temp) + " &deg;C</h2>";
+    }
+    if (isnan(am2302Temp)) {
+      html += "<h2>Error reading ENV temperature!</h2>";
+    } else {
+      html += "<h2>Current ENV Temperature: " + String(am2302Temp) + " &deg;C</h2>";
+    }
+
+    // Display auto/manual mode button
+    html += "<form action=\"/auto\"><input type=\"submit\" value=\"";
+    html += autoMode ? "Set Manual" : "Set Auto";
+    html += "\"></form>";
+
+    // Display slider for manual mode
+    if (!autoMode) {
+      html += "<form action=\"/manual\">";
+      html += "PWM: <input type=\"range\" name=\"pwm\" min=\"0\" max=\"255\" value=\"";
+      html += String(pwmValue);
+      html += "\">";
+      html += "<input type=\"submit\" value=\"Set PWM\"></form>";
+    }
+
+    html += "</body></html>";
+    
+    client.println("HTTP/1.1 200 OK");
+    client.println("Content-Type: text/html");
+    client.println("Connection: close");
+    client.println();
+    client.println(html);
+    
+    client.stop();
+  }
+
+  // Check if 10 seconds have passed to update readings and fan speed
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastUpdate >= 10000) {
+    lastUpdate = currentMillis;
+    
+    // Update the temperature readings
+    ds18b20.requestTemperatures();
+    ds18b20Temp = ds18b20.getTempCByIndex(0);
+    am2302Temp = dht.readTemperature();
+    
+    // Update LCD with temperature readings
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("IVT: " + String(ds18b20Temp) + "C");
+    lcd.setCursor(0, 1);
+    lcd.print("ENV: " + String(am2302Temp) + "C");
+    
+    // Display FAN status
+    lcd.setCursor(0, 1);
+    if (digitalRead(RELAY_PIN) == LOW) {
+      lcd.print("FAN: OFF");
+    } else {
+      int pwmPercentage = (pwmValue * 100) / 255;
+      lcd.print("FAN: " + String(pwmPercentage) + "%");
+    }
+
+    // Control fans based on auto/manual mode
+    if (autoMode) {
+      pwmValue = temperatureToPWM(ds18b20Temp);
+      for (int i = 0; i < 4; i++) {
+        analogWrite(PWM1_PIN + i, pwmValue);
+      }
+    }
+
+    // Control relay based on temperature difference
+    if (!isnan(am2302Temp) && ds18b20Temp != -127.00) {
+      if (ds18b20Temp < (am2302Temp - 2)) {
+        digitalWrite(RELAY_PIN, LOW); // Turn off relay
+      } else {
+        digitalWrite(RELAY_PIN, HIGH); // Turn on relay
+      }
+    }
+  }
+}
+
+/*
+Connection Wires:
+
+1. DS18B20 Temperature Sensor:
+   - VCC to 3.3V
+   - GND to GND
+   - Data to GPIO14 (D5) with a 4.7k pull-up resistor to 3.3V
+
+2. AM2302 (DHT22) Temperature Sensor:
+   - VCC to 3.3V
+   - GND to GND
+   - Data to GPIO12 (D6)
+
+3. Relay:
+   - VCC to 3.3V
+   - GND to GND
+   - Control to GPIO16 (D0)
+
+4. PWM Fans:
+   - Fan 1 Control to GPIO13 (D7)
+   - Fan 2 Control to GPIO15 (D8)
+   - Fan 3 Control to GPIO3 (RX)
+   - Fan 4 Control to GPIO1 (TX)
+
+5. I2C LCD:
+   - VCC to 3.3V
+   - GND to GND
+   - SDA to GPIO4 (D2)
+   - SCL to GPIO5 (D1)
+*/
