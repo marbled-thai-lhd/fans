@@ -6,16 +6,16 @@
 #include <LiquidCrystal_I2C.h>
 
 // Pin assignments
-const int DS18B20_PIN = D5;   // GPIO14
-const int DHT22_PIN = D6;     // GPIO12
-const int RELAY1_PIN = D0;    // GPIO16
-const int RELAY2_PIN = D7;    // GPIO13 (or any other available GPIO pin)
-const int PWM1_PIN = D8;      // GPIO15
-const int PWM2_PIN = D4;      // GPIO2
-const int PWM3_PIN = D3;      // GPIO0
-const int PWM4_PIN = D2;      // GPIO4
-const int I2C_SDA = D2;       // GPIO4
-const int I2C_SCL = D1;       // GPIO5
+const int DS18B20_PIN = 14;   // GPIO14
+const int DHT22_PIN = 12;     // GPIO12
+const int RELAY1_PIN = 16;    // GPIO16
+const int RELAY2_PIN = 10;    // GPIO10 (or any other available GPIO pin)
+const int PWM1_PIN = 13;      // GPIO13
+const int PWM2_PIN = 15;      // GPIO15
+const int PWM3_PIN = 3;       // GPIO3 (RX)
+const int PWM4_PIN = 1;       // GPIO1 (TX)
+const int I2C_SDA = 4;        // GPIO4 (D2)
+const int I2C_SCL = 5;        // GPIO5 (D1)
 
 OneWire oneWire(DS18B20_PIN);
 DallasTemperature ds18b20(&oneWire);
@@ -23,7 +23,7 @@ DHT dht(DHT22_PIN, DHT22);
 LiquidCrystal_I2C lcd(0x27, 16, 2); // Change 0x27 to your LCD's I2C address
 
 // Network settings
-const char* ssid = "your_SSID";
+const char* ssid = "JinZun GF";
 const char* password = "your_PASSWORD";
 WiFiServer server(80);
 
@@ -143,7 +143,7 @@ void loop() {
   }
 
   unsigned long currentMillis = millis();
-  if (currentMillis - lastUpdate >= 10000) {
+  if (currentMillis - lastUpdate >= 5000) {
     lastUpdate = currentMillis;
     
     // Update the temperature readings
@@ -203,11 +203,11 @@ Wired Connections:
 - Connect DS18B20 data pin to D5 (GPIO14)
 - Connect DHT22 data pin to D6 (GPIO12)
 - Connect relay1 to D0 (GPIO16)
-- Connect relay2 to D7 (GPIO13 or any other available GPIO pin)
-- Connect PWM1 to D8 (GPIO15)
-- Connect PWM2 to D4 (GPIO2)
-- Connect PWM3 to D3 (GPIO0)
-- Connect PWM4 to D2 (GPIO4)
+- Connect relay2 to D10 (GPIO10 or any other available GPIO pin)
+- Connect PWM1 to D7 (GPIO13)
+- Connect PWM2 to D8 (GPIO15)
+- Connect PWM3 to RX (GPIO3)
+- Connect PWM4 to TX (GPIO1)
 - Connect I2C SDA pin to D2 (GPIO4)
 - Connect I2C SCL pin to D1 (GPIO5)
 */
