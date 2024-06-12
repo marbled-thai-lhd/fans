@@ -169,7 +169,7 @@ void loop() {
 
     // Control relay based on temperature difference
     if (!isnan(am2302Temp) && ds18b20Temp != -127.00) {
-      if (ds18b20Temp < (am2302Temp - 2) && ds18b20Temp < 35) {
+      if (ds18b20Temp < (am2302Temp + 2) || ds18b20Temp < 36) {
         digitalWrite(RELAY_PIN, LOW); // Turn off relay
       } else {
         digitalWrite(RELAY_PIN, HIGH); // Turn on relay
