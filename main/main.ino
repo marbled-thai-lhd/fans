@@ -22,8 +22,8 @@ DHT dht(DHT22_PIN, DHT22);
 LiquidCrystal_I2C lcd(0x27, 16, 2); // Change 0x27 to your LCD's I2C address
 
 // Network settings
-const char* ssid = "your_SSID";
-const char* password = "your_PASSWORD";
+const char* ssid = "JinZun GF";
+const char* password = "";
 WiFiServer server(80);
 
 bool autoMode = false;
@@ -41,23 +41,30 @@ int temperatureToPWM(float tempC) {
 
 void setup() {
   Serial.begin(115200);
+  lcd.init();
+  lcd.init();
+  lcd.backlight();
   WiFi.begin(ssid, password);
-  
+
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
+    delay(1000);                      // wait for a second
     Serial.print(".");
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("WIFI....");
   }
   
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
-  
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(WiFi.localIP());
+
   server.begin();
   ds18b20.begin();
   dht.begin();
-  lcd.init();
-  lcd.backlight();
   
   pinMode(PWM1_PIN, OUTPUT);
   pinMode(PWM2_PIN, OUTPUT);
@@ -70,6 +77,7 @@ void setup() {
 void loop() {
   WiFiClient client = server.available();
   if (client) {
+    Serial.println("Connect");
     // Read the client's request
     String request = client.readStringUntil('\r');
     Serial.println(request);
@@ -106,9 +114,9 @@ void loop() {
       html += "<h2>Ivt: " + String(ds18b20Temp) + " &deg;C";
     }
     if (isnan(am2302Temp)) {
-      html += "  Error reading ENV temperature!</h2>";
+      html += "<h2>Error reading ENV temperature!</h2>";
     } else {
-      html += "  Env: " + String(am2302Temp) + " &deg;C</h2>";
+      html += "<h2>Env: " + String(am2302Temp) + " &deg;C</h2>";
     }
 
     // Display auto/manual mode button
@@ -149,9 +157,17 @@ void loop() {
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("Ivt: ");
-    lcd.print(ds18b20Temp, 1);
+    if (ds18b20Temp == -127.00) {
+      lcd.print("--");
+    } else {
+      lcd.print(ds18b20Temp, 1);
+    }
     lcd.print(" C       Env: ");
-    lcd.print(am2302Temp, 1);
+    if (isnan(am2302Temp)) {
+      lcd.print("--");
+    } else {
+      lcd.print(am2302Temp, 1);
+    }
     lcd.print(" C");
     lcd.setCursor(0, 1);
     lcd.print("Fan: ");
