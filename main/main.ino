@@ -118,7 +118,7 @@ void loop() {
     // Display auto/manual mode button
     html += "<form action=\"/";
     html += autoMode ? "auto" : "manual";
-    html += \"><input type=\"submit\" value=\"";
+    html += "\"><input type=\"submit\" value=\"";
     html += autoMode ? "Set Manual" : "Set Auto";
     html += "\"></form>";
 
