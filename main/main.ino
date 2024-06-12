@@ -6,14 +6,14 @@
 #include <LiquidCrystal_I2C.h>
 
 // Pin assignments
-const int DS18B20_PIN = 14;   // GPIO14
-const int DHT22_PIN = 12;     // GPIO12
-const int RELAY1_PIN = 16;    // GPIO16
-const int RELAY2_PIN = 10;    // GPIO10 (or any other available GPIO pin)
-const int PWM1_PIN = 13;      // GPIO13
-const int PWM2_PIN = 15;      // GPIO15
-const int PWM3_PIN = 3;       // GPIO3 (RX)
-const int PWM4_PIN = 1;       // GPIO1 (TX)
+const int DS18B20_PIN = 14;   // GPIO14 (D5)
+const int DHT22_PIN = 12;     // GPIO12 (D6)
+const int RELAY1_PIN = 16;    // GPIO16 (D0)
+const int RELAY2_PIN = 13;    // GPIO13 (D7)
+const int PWM1_PIN = 15;      // GPIO15 (D8)
+const int PWM2_PIN = 2;       // GPIO2 (D4)
+const int PWM3_PIN = 0;       // GPIO0 (D3)
+const int PWM4_PIN = 4;       // GPIO4 (D2)
 const int I2C_SDA = 4;        // GPIO4 (D2)
 const int I2C_SCL = 5;        // GPIO5 (D1)
 
@@ -95,9 +95,10 @@ void loop() {
       int pwmEnd = request.indexOf("&", pwmStart);
       if (pwmEnd == -1) pwmEnd = request.indexOf(" ", pwmStart);
       pwmValue = request.substring(pwmStart, pwmEnd).toInt();
-      for (int i = 0; i < 4; i++) {
-        analogWrite(PWM1_PIN + i, pwmValue);
-      }
+      analogWrite(PWM1_PIN, pwmValue);
+      analogWrite(PWM2_PIN, pwmValue);
+      analogWrite(PWM3_PIN, pwmValue);
+      analogWrite(PWM4_PIN, pwmValue);
     }
 
     // Construct the HTML response
@@ -175,9 +176,10 @@ void loop() {
     // Control fans based on auto/manual mode
     if (autoMode) {
       pwmValue = temperatureToPWM(ds18b20Temp);
-      for (int i = 0; i < 4; i++) {
-        analogWrite(PWM1_PIN + i, pwmValue);
-      }
+      analogWrite(PWM1_PIN, pwmValue);
+      analogWrite(PWM2_PIN, pwmValue);
+      analogWrite(PWM3_PIN, pwmValue);
+      analogWrite(PWM4_PIN, pwmValue);
     }
 
     // Control relay1 based on temperature difference
@@ -200,14 +202,14 @@ void loop() {
 
 /*
 Wired Connections:
-- Connect DS18B20 data pin to D5 (GPIO14)
-- Connect DHT22 data pin to D6 (GPIO12)
-- Connect relay1 to D0 (GPIO16)
-- Connect relay2 to D10 (GPIO10 or any other available GPIO pin)
-- Connect PWM1 to D7 (GPIO13)
-- Connect PWM2 to D8 (GPIO15)
-- Connect PWM3 to RX (GPIO3)
-- Connect PWM4 to TX (GPIO1)
-- Connect I2C SDA pin to D2 (GPIO4)
-- Connect I2C SCL pin to D1 (GPIO5)
+- Connect DS18B20 data pin to GPIO14 (D5)
+- Connect DHT22 data pin to GPIO12 (D6)
+- Connect relay1 to GPIO16 (D0)
+- Connect relay2 to GPIO13 (D7)
+- Connect PWM1 to GPIO15 (D8)
+- Connect PWM2 to GPIO2 (D4)
+- Connect PWM3 to GPIO0 (D3)
+- Connect PWM4 to GPIO4 (D2)
+- Connect I2C SDA pin to GPIO4 (D2)
+- Connect I2C SCL pin to GPIO5 (D1)
 */
