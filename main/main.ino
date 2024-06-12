@@ -6,15 +6,16 @@
 #include <LiquidCrystal_I2C.h>
 
 // Pin assignments
-const int DS18B20_PIN = 14;   // GPIO14
-const int DHT22_PIN = 12;     // GPIO12
-const int RELAY_PIN = 16;     // GPIO16
-const int PWM1_PIN = 13;      // GPIO13
-const int PWM2_PIN = 15;      // GPIO15
-const int PWM3_PIN = 3;       // GPIO3 (RX)
-const int PWM4_PIN = 1;       // GPIO1 (TX)
-const int I2C_SDA = 4;        // GPIO4 (D2)
-const int I2C_SCL = 5;        // GPIO5 (D1)
+const int DS18B20_PIN = D5;   // GPIO14
+const int DHT22_PIN = D6;     // GPIO12
+const int RELAY1_PIN = D0;    // GPIO16
+const int RELAY2_PIN = D7;    // GPIO13 (or any other available GPIO pin)
+const int PWM1_PIN = D8;      // GPIO15
+const int PWM2_PIN = D4;      // GPIO2
+const int PWM3_PIN = D3;      // GPIO0
+const int PWM4_PIN = D2;      // GPIO4
+const int I2C_SDA = D2;       // GPIO4
+const int I2C_SCL = D1;       // GPIO5
 
 OneWire oneWire(DS18B20_PIN);
 DallasTemperature ds18b20(&oneWire);
@@ -22,8 +23,8 @@ DHT dht(DHT22_PIN, DHT22);
 LiquidCrystal_I2C lcd(0x27, 16, 2); // Change 0x27 to your LCD's I2C address
 
 // Network settings
-const char* ssid = "JinZun GF";
-const char* password = "";
+const char* ssid = "your_SSID";
+const char* password = "your_PASSWORD";
 WiFiServer server(80);
 
 bool autoMode = false;
@@ -41,7 +42,6 @@ int temperatureToPWM(float tempC) {
 
 void setup() {
   Serial.begin(115200);
-  lcd.init();
   lcd.init();
   lcd.backlight();
   WiFi.begin(ssid, password);
@@ -70,8 +70,10 @@ void setup() {
   pinMode(PWM2_PIN, OUTPUT);
   pinMode(PWM3_PIN, OUTPUT);
   pinMode(PWM4_PIN, OUTPUT);
-  pinMode(RELAY_PIN, OUTPUT);
-  digitalWrite(RELAY_PIN, LOW); // Ensure relay is off initially
+  pinMode(RELAY1_PIN, OUTPUT);
+  pinMode(RELAY2_PIN, OUTPUT);
+  digitalWrite(RELAY1_PIN, LOW); // Ensure relay1 is off initially
+  digitalWrite(RELAY2_PIN, LOW); // Ensure relay2 is off initially
 }
 
 void loop() {
@@ -117,7 +119,7 @@ void loop() {
 
     // Display auto/manual mode button
     html += "<form action=\"/";
-    html += autoMode ? "auto" : "manual";
+    html += !autoMode ? "auto" : "manual";
     html += "\"><input type=\"submit\" value=\"";
     html += autoMode ? "Set Manual" : "Set Auto";
     html += "\"></form>";
@@ -141,7 +143,7 @@ void loop() {
   }
 
   unsigned long currentMillis = millis();
-  if (currentMillis - lastUpdate >= 5000) {
+  if (currentMillis - lastUpdate >= 10000) {
     lastUpdate = currentMillis;
     
     // Update the temperature readings
@@ -164,7 +166,6 @@ void loop() {
     } else {
       lcd.print(am2302Temp, 1);
     }
-    lcd.print(" C");
     lcd.setCursor(0, 1);
     lcd.print("Fan: ");
     lcd.print(map(pwmValue, 0, 255, 0, 100));
@@ -179,13 +180,20 @@ void loop() {
       }
     }
 
-    // Control relay based on temperature difference
+    // Control relay1 based on temperature difference
     if (!isnan(am2302Temp) && ds18b20Temp != -127.00) {
       if (ds18b20Temp < (am2302Temp + 2) || ds18b20Temp < 36) {
-        digitalWrite(RELAY_PIN, LOW); // Turn off relay
+        digitalWrite(RELAY1_PIN, LOW); // Turn off relay1
       } else {
-        digitalWrite(RELAY_PIN, HIGH); // Turn on relay
+        digitalWrite(RELAY1_PIN, HIGH); // Turn on relay1
       }
+    }
+
+    // Control relay2 based on DS18B20 temperature
+    if (ds18b20Temp != -127.00) {
+      digitalWrite(RELAY2_PIN, HIGH); // Turn on relay2
+    } else {
+      digitalWrite(RELAY2_PIN, LOW); // Turn off relay2
     }
   }
 }
@@ -194,11 +202,12 @@ void loop() {
 Wired Connections:
 - Connect DS18B20 data pin to D5 (GPIO14)
 - Connect DHT22 data pin to D6 (GPIO12)
-- Connect relay to D0 (GPIO16)
-- Connect PWM1 to D7 (GPIO13)
-- Connect PWM2 to D8 (GPIO15)
-- Connect PWM3 to RX (GPIO3)
-- Connect PWM4 to TX (GPIO1)
+- Connect relay1 to D0 (GPIO16)
+- Connect relay2 to D7 (GPIO13 or any other available GPIO pin)
+- Connect PWM1 to D8 (GPIO15)
+- Connect PWM2 to D4 (GPIO2)
+- Connect PWM3 to D3 (GPIO0)
+- Connect PWM4 to D2 (GPIO4)
 - Connect I2C SDA pin to D2 (GPIO4)
 - Connect I2C SCL pin to D1 (GPIO5)
 */
