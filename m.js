@@ -220,7 +220,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		pwmChart.data.datasets[0].data[0] = value;
 		pwmChart.data.datasets[0].data[1] = 255 - value;
 		pwmChart.update();
-		fanPercentLabel.innerText = `${value}%`;
+		fanPercentLabel.innerText = `${value/255}%`;
 	}
 
 	const temp1Ctx = document.getElementById('temp1Chart').getContext('2d');
@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	document.getElementById('temp1').innerText = _i.i;
 	document.getElementById('temp2').innerText = _i.e;
-	document.getElementById('fan-percent').innerText = _i.f;
+	document.getElementById('fan-percent').innerText = _i.f / 255;
 	updateTemp1Chart(_i.i);
 	updateTemp2Chart(_i.e);
 	updatePwmChart(_i.f);
