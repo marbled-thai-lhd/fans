@@ -4,6 +4,7 @@
 #include <DHT.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include <EEPROM.h>
 
 // Pin assignments
 const int DS18B20_PIN = 14;   // GPIO14 (D5)
@@ -20,7 +21,7 @@ const int I2C_SCL = 5;        // GPIO5 (D1)
 OneWire oneWire(DS18B20_PIN);
 DallasTemperature ds18b20(&oneWire);
 DHT dht(DHT22_PIN, DHT22);
-LiquidCrystal_I2C lcd(0x27, 16, 2); // Change 0x27 to your LCD's I2C address
+LiquidCrystal_I2C lcd(0x3F, 16, 2); // Change 0x27 to your LCD's I2C address
 
 // Network settings
 const char* ssid = "JinZun GF";
@@ -28,7 +29,7 @@ const char* password = "your_PASSWORD";
 WiFiServer server(80);
 
 bool autoMode = false;
-int pwmValue = 0;
+int pwmValue = 51;
 float ds18b20Temp = 0.0;
 float am2302Temp = 0.0;
 unsigned long lastUpdate = 0;  // Store the last update time
@@ -74,6 +75,11 @@ void setup() {
   pinMode(RELAY2_PIN, OUTPUT);
   digitalWrite(RELAY1_PIN, LOW); // Ensure relay1 is off initially
   digitalWrite(RELAY2_PIN, LOW); // Ensure relay2 is off initially
+  EEPROM.begin(8);
+  pwmValue = EEPROM.read(0);
+  if (pwmValue < 0 || pwmValue > 255) {
+    pwmValue = 51;
+  }
 }
 
 void loop() {
@@ -95,6 +101,9 @@ void loop() {
       int pwmEnd = request.indexOf("&", pwmStart);
       if (pwmEnd == -1) pwmEnd = request.indexOf(" ", pwmStart);
       pwmValue = request.substring(pwmStart, pwmEnd).toInt();
+      EEPROM.write(0, pwmValue);
+      EEPROM.commit();
+
       analogWrite(PWM1_PIN, pwmValue);
       analogWrite(PWM2_PIN, pwmValue);
       analogWrite(PWM3_PIN, pwmValue);
@@ -102,37 +111,7 @@ void loop() {
     }
 
     // Construct the HTML response
-    String html = "<html><body>";
-    html += "<h1>ESP8266 Web Server</h1>";
-    html += "<h2>Mode: ";
-    html += autoMode ? "Auto" : "Manual";
-    html += "</h2>";
-    if (ds18b20Temp == -127.00) {
-      html += "<h2>Error reading DS18B20 temperature!</h2>";
-    } else {
-      html += "<h2>Ivt: " + String(ds18b20Temp) + " &deg;C";
-    }
-    if (isnan(am2302Temp)) {
-      html += "<h2>Error reading ENV temperature!</h2>";
-    } else {
-      html += "<h2>Env: " + String(am2302Temp) + " &deg;C</h2>";
-    }
-
-    // Display auto/manual mode button
-    html += "<form action=\"/";
-    html += !autoMode ? "auto" : "manual";
-    html += "\"><input type=\"submit\" value=\"";
-    html += autoMode ? "Set Manual" : "Set Auto";
-    html += "\"></form>";
-
-    // Display slider for manual mode
-    html += "<form action=\"/manual\">";
-    html += "PWM: <input type=\"range\" name=\"pwm\" min=\"0\" max=\"255\" value=\"";
-    html += String(pwmValue);
-    html += "\">";
-    html += "<input type=\"submit\" value=\"Set PWM\"></form>";
-
-    html += "</body></html>";
+    String html = "";
     
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/html");
@@ -155,21 +134,22 @@ void loop() {
     // Update LCD display
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("Ivt: ");
+    lcd.print("Temp");
     if (ds18b20Temp == -127.00) {
-      lcd.print("--");
+      lcd.print("--.-");
     } else {
       lcd.print(ds18b20Temp, 1);
     }
-    lcd.print(" C       Env: ");
+    lcd.print(" ");
     if (isnan(am2302Temp)) {
-      lcd.print("--");
+      lcd.print("--.-");
     } else {
       lcd.print(am2302Temp, 1);
     }
+    lcd.print(" C");
     lcd.setCursor(0, 1);
     lcd.print("Fan: ");
-    lcd.print(map(pwmValue, 0, 255, 0, 100));
+    lcd.print(pwmValue * 100 / 255, 2);
     lcd.print("%                ");
     lcd.print(autoMode ? "Auto" : "Manual");
 
