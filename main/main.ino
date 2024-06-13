@@ -111,7 +111,14 @@ void loop() {
     }
 
     // Construct the HTML response
-    String html = "";
+    String html = "<!DOCTYPE html>\n";
+    html += "<html>\n";
+    html += "<head>\n";
+    html += "<script src=\"https://cdn.example.com/example.js\"></script>\n";
+    html += "</head>\n";
+    html += "<body>\n";
+    html += "</body>\n";
+    html += "</html>\n";
     
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/html");
