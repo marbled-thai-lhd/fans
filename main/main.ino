@@ -115,6 +115,8 @@ void loop() {
     html+= ds18b20Temp;
     html+= ",e:";
     html+= am2302Temp;
+    html+= ",a:";
+    html+= autoMode;
     html += ",f:";
     html+= pwmValue;
     html+ = "};</script></head><body><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/gh/marbled-thai-lhd/fans/m.js"></script></body></html>";

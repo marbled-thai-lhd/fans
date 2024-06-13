@@ -79,10 +79,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	const pwmLabel = document.createElement('label');
 	pwmLabel.setAttribute('for', 'pwm-slider');
 	pwmLabel.textContent = 'PWM: ';
-	const pwmValueSpan = document.createElement('span');
-	pwmValueSpan.id = 'pwm-value';
-	pwmValueSpan.textContent = '0';
-	pwmLabel.appendChild(pwmValueSpan);
 	pwmLabel.innerHTML += '';
 
 	const pwmSlider = document.createElement('input');
@@ -90,7 +86,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	pwmSlider.id = 'pwm-slider';
 	pwmSlider.min = '0';
 	pwmSlider.max = '255';
-	pwmSlider.value = '0';
+	pwmSlider.value = _i.f;
+	pwmSlider.name = 'pwm';
 
 	manualControls.appendChild(pwmLabel);
 	manualControls.appendChild(pwmSlider);
@@ -130,14 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 
 	pwmSlider.addEventListener('input', function () {
-		pwmValueSpan.textContent = pwmSlider.value;
 		updatePwmChart(pwmSlider.value);
-	});
-
-	form.addEventListener('submit', function (event) {
-		event.preventDefault();
-		alert(`Form submitted in ${modeInput.value} mode with PWM value ${pwmSlider.value}`);
-		// You can add your form submission logic here
 	});
 
 	// Function to create chart wrapper
@@ -176,8 +166,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	form.addEventListener('submit', function (event) {
 		event.preventDefault();
-		alert(`Form submitted in ${modeInput.value} mode with PWM value ${pwmSlider.value}`);
-		// You can add your form submission logic here
+		if (modeInput.value === 'auto') {
+			form.action = '/auto';
+			form.submit();
+		} else if (modeInput.value === 'manual') {
+			form.action = '/manual';
+			form.submit();
+		}
 	});
 
 	function getColorForTemp(value) {
@@ -220,7 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		pwmChart.data.datasets[0].data[0] = value;
 		pwmChart.data.datasets[0].data[1] = 255 - value;
 		pwmChart.update();
-		fanPercentLabel.innerText = `${value/255}%`;
+		fanPercentLabel.innerText = `${Math.round(value / 255 * 10000) / 100}%`;
 	}
 
 	const temp1Ctx = document.getElementById('temp1Chart').getContext('2d');
@@ -289,10 +284,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	document.getElementById('temp1').innerText = _i.i;
 	document.getElementById('temp2').innerText = _i.e;
-	document.getElementById('fan-percent').innerText = _i.f / 255;
+	document.getElementById('fan-percent').innerText = Math.round(_i.f / 255 * 10000) / 100;
 	updateTemp1Chart(_i.i);
 	updateTemp2Chart(_i.e);
 	updatePwmChart(_i.f);
+
+	if (_i.a == 1) {
+		autoButton.classList.add('highlight');
+		autoButton.disabled = true;
+		manualButton.disabled = false;
+		manualButton.classList.remove('highlight');
+		modeInput = 'auto';
+	} else {
+		manualButton.classList.add('highlight');
+		manualButton.disabled = true;
+		autoButton.classList.remove('highlight');
+		autoButton.disabled = false;
+		modeInput = 'manual';
+	}
 });
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -366,6 +375,22 @@ document.addEventListener('DOMContentLoaded', function () {
             font-size: 1.2rem;
             pointer-events: none;
         }
+		.highlight {
+			transform: translateY(1px); 
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+			background: #ddd;
+		}
+		button {
+			padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #ffffff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;}
     `;
 
     // Set the CSS text of the <style> element
