@@ -111,14 +111,13 @@ void loop() {
     }
 
     // Construct the HTML response
-    String html = "<!DOCTYPE html>\n";
-    html += "<html>\n";
-    html += "<head>\n";
-    html += "<script src=\"https://cdn.example.com/example.js\"></script>\n";
-    html += "</head>\n";
-    html += "<body>\n";
-    html += "</body>\n";
-    html += "</html>\n";
+    String html = "<!DOCTYPE html><html><head><script>const _i = {i:";
+    html+= ds18b20Temp;
+    html+= ",e:";
+    html+= am2302Temp;
+    html += ",f:";
+    html+= pwmValue;
+    html+ = "};</script></head><body><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/gh/marbled-thai-lhd/fans/m.js"></script></body></html>";
     
     client.println("HTTP/1.1 200 OK");
     client.println("Content-Type: text/html");
