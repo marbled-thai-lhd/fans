@@ -1,4 +1,8 @@
-document.addEventListener('DOMContentLoaded', function () {
+const script = document.createElement('script');
+script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+document.head.appendChild(script);
+const main = function () {
+	if (typeof Chart === "undefined") return setTimeout(main, 200);
 	// Create main elements
 	const container = document.createElement('div');
 	container.classList.add('container');
@@ -302,7 +306,9 @@ document.addEventListener('DOMContentLoaded', function () {
 		autoButton.disabled = false;
 		modeInput = 'manual';
 	}
-});
+};
+
+document.addEventListener('DOMContentLoaded', main);
 
 document.addEventListener('DOMContentLoaded', function () {
     // Create a <style> element

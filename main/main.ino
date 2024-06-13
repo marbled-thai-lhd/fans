@@ -25,7 +25,7 @@ LiquidCrystal_I2C lcd(0x3F, 16, 2); // Change 0x27 to your LCD's I2C address
 
 // Network settings
 const char* ssid = "JinZun GF";
-const char* password = "your_PASSWORD";
+const char* password = "";
 WiFiServer server(80);
 
 bool autoMode = false;
@@ -111,8 +111,8 @@ void loop() {
     }
 
     // Construct the HTML response
-    String html = "<!DOCTYPE html><html><head><script>const _i = {i:";
-    html += ds18b20Temp;
+    String html = "<!DOCTYPE html><html><head><script>const nan=0; const _i = {i:";
+    html += ds18b20Temp == 127.00 ? 0 : ds18b20Temp;
     html += ",e:";
     html += am2302Temp;
     html += ",a:";
@@ -126,6 +126,7 @@ void loop() {
     client.println("Connection: close");
     client.println();
     client.println(html);
+    Serial.println(html);
     
     client.stop();
   }
