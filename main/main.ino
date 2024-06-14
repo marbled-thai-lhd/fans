@@ -25,7 +25,7 @@ DHT dht(DHT22_PIN, DHT22);
 LiquidCrystal_I2C lcd(0x3F, 16, 2); // Change 0x27 to your LCD's I2C address
 
 // Network settings
-const char* ssid = "JinZun 1-1";
+const char* ssid = "JinZun GF";
 const char* password = "";
 ESP8266WebServer server(80);
 
@@ -87,6 +87,13 @@ void setup() {
 
 void loop() {
   server.handleClient();
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);                      // wait for a second
+    Serial.print(".");
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("WIFI....");
+  }
 }
 
 void serverRouteRegister() {
