@@ -170,17 +170,6 @@ const main = function () {
 		updatePwmChart(pwmSlider.value);
 	});
 
-	form.addEventListener('submit', function (event) {
-		event.preventDefault();
-		if (modeInput.value === 'auto') {
-			form.action = '/auto';
-			form.submit();
-		} else if (modeInput.value === 'manual') {
-			form.action = '/manual';
-			form.submit();
-		}
-	});
-
 	function getColorForTemp(value) {
 		if (value < 30) {
 			return 'skyblue';
