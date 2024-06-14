@@ -295,24 +295,24 @@ const main = function () {
 	updateTemp2Chart(_i.e);
 	updatePwmChart(_i.f);
 
-	modeUpdate(_i.a == 1);
+	const modeUpdate = (auto) => {
+		if (auto) {
+			autoButton.classList.add('highlight');
+			autoButton.disabled = true;
+			manualButton.disabled = false;
+			manualButton.classList.remove('highlight');
+			modeInput.value = 'auto';
+		} else {
+			manualButton.classList.add('highlight');
+			manualButton.disabled = true;
+			autoButton.classList.remove('highlight');
+			autoButton.disabled = false;
+			modeInput.value = 'manual';
+		}
+	}
+	modeUpdate(_i.a == 1); 
 };
 
-const modeUpdate = (auto) => {
-	if (auto) {
-		autoButton.classList.add('highlight');
-		autoButton.disabled = true;
-		manualButton.disabled = false;
-		manualButton.classList.remove('highlight');
-		modeInput.value = 'auto';
-	} else {
-		manualButton.classList.add('highlight');
-		manualButton.disabled = true;
-		autoButton.classList.remove('highlight');
-		autoButton.disabled = false;
-		modeInput.value = 'manual';
-	}
-}
 
 document.addEventListener('DOMContentLoaded', main);
 
@@ -387,10 +387,28 @@ document.addEventListener('DOMContentLoaded', function () {
             font-size: 1.2rem;
             pointer-events: none;
         }
-		.highlight {
+		button.highlight {
 			transform: translateY(1px); 
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-			background: #ddd;
+			background-color: white;
+			border-color: green;
+			color: green;
+			padding-left: 30px;
+		}
+		button.highlight::before {
+			content: "";
+			background-color: transparent;
+			position: absolute;
+			left: 10px;
+			top: 10px;
+			width: 5px;
+			border-bottom: 3px solid #4D7C2A;
+			height: 11px;
+			border-right: 3px solid #4D7C2A;
+			transform: rotate(45deg);
+			-o-transform: rotate(45deg);
+			-ms-transform: rotate(45deg);
+			-webkit-transform: rotate(45deg);
 		}
 		button {
 			padding: 10px 20px;
