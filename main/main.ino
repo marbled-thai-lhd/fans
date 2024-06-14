@@ -1,4 +1,5 @@
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <DHT.h>
@@ -9,12 +10,12 @@
 // Pin assignments
 const int DS18B20_PIN = 14;   // GPIO14 (D5)
 const int DHT22_PIN = 12;     // GPIO12 (D6)
-const int RELAY1_PIN = 16;    // GPIO16 (D0)
+const int RELAY1_PIN = 5;    // GPIO1 (TX)
 const int RELAY2_PIN = 13;    // GPIO13 (D7)
 const int PWM1_PIN = 15;      // GPIO15 (D8)
 const int PWM2_PIN = 2;       // GPIO2 (D4)
 const int PWM3_PIN = 0;       // GPIO0 (D3)
-const int PWM4_PIN = 4;       // GPIO4 (D2)
+const int PWM4_PIN = 16;       // GPIO16 (D0)
 const int I2C_SDA = 4;        // GPIO4 (D2)
 const int I2C_SCL = 5;        // GPIO5 (D1)
 
@@ -24,9 +25,9 @@ DHT dht(DHT22_PIN, DHT22);
 LiquidCrystal_I2C lcd(0x3F, 16, 2); // Change 0x27 to your LCD's I2C address
 
 // Network settings
-const char* ssid = "JinZun GF";
+const char* ssid = "JinZun 1-1";
 const char* password = "";
-WiFiServer server(80);
+ESP8266WebServer server(80);
 
 bool autoMode = false;
 int pwmValue = 51;
@@ -80,38 +81,46 @@ void setup() {
   if (pwmValue < 0 || pwmValue > 255) {
     pwmValue = 51;
   }
+
+  serverRouteRegister();
 }
 
 void loop() {
-  WiFiClient client = server.available();
-  if (client) {
-    Serial.println("Connect");
-    // Read the client's request
-    String request = client.readStringUntil('\r');
-    Serial.println(request);
-    client.flush();  // Clear the client's buffer
-    
-    // Check if auto or manual mode is requested
-    if (request.indexOf("GET /auto") >= 0) {
-      autoMode = true;
-    } else if (request.indexOf("GET /manual") >= 0) {
-      autoMode = false;
-      String pwmParam = "pwm=";
-      int pwmStart = request.indexOf(pwmParam) + pwmParam.length();
-      int pwmEnd = request.indexOf("&", pwmStart);
-      if (pwmEnd == -1) pwmEnd = request.indexOf(" ", pwmStart);
-      pwmValue = request.substring(pwmStart, pwmEnd).toInt();
-      EEPROM.write(0, pwmValue);
-      EEPROM.commit();
+  server.handleClient();
+}
 
-      analogWrite(PWM1_PIN, pwmValue);
-      analogWrite(PWM2_PIN, pwmValue);
-      analogWrite(PWM3_PIN, pwmValue);
-      analogWrite(PWM4_PIN, pwmValue);
+void serverRouteRegister() {
+  server.on("/", []() {
+    String action = getValue("mode");
+    String pwm = getValue("pwm");
+    if (action != "") {
+      autoMode = action == "auto";
+      if (!autoMode && pwm != "") {
+        pwmValue = pwm.toInt();
+        analogWrite(PWM1_PIN, pwmValue);
+        analogWrite(PWM2_PIN, pwmValue);
+        analogWrite(PWM3_PIN, pwmValue);
+        analogWrite(PWM4_PIN, pwmValue);
+        EEPROM.write(0, pwmValue);
+        EEPROM.commit();
+      }
     }
 
-    // Construct the HTML response
-    String html = "<!DOCTYPE html><html><head><script>const nan=0; const _i = {i:";
+    server.send(200, "text/html", htmlGenarator());
+
+  });
+}
+
+String getValue(String key) {
+  for (int i = 0; i < server.args(); i++) {
+    if (server.argName(i) == key) return server.arg(i);
+  } 
+  return "";
+}
+
+String htmlGenarator() {
+      // Construct the HTML response
+    String html = "<body><script>const nan=0; const _i = {i:";
     html += ds18b20Temp == 127.00 ? 0 : ds18b20Temp;
     html += ",e:";
     html += am2302Temp;
@@ -119,18 +128,11 @@ void loop() {
     html += autoMode;
     html += ",f:";
     html += pwmValue;
-    html += "};</script></head><body><script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script><script src=\"https://cdn.jsdelivr.net/gh/marbled-thai-lhd/fans/m.js\"></script></body></html>";
-    
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/html");
-    client.println("Connection: close");
-    client.println();
-    client.println(html);
-    Serial.println(html);
-    
-    client.stop();
-  }
+    html += "};</script><script src=\"https://cdn.jsdelivr.net/gh/marbled-thai-lhd/fans/m.js\"></script></body>";
+    return html;
+}
 
+void pinHandler() {
   unsigned long currentMillis = millis();
   if (currentMillis - lastUpdate >= 5000) {
     lastUpdate = currentMillis;

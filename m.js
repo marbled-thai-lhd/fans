@@ -298,13 +298,13 @@ const main = function () {
 		autoButton.disabled = true;
 		manualButton.disabled = false;
 		manualButton.classList.remove('highlight');
-		modeInput = 'auto';
+		modeInput.value = 'auto';
 	} else {
 		manualButton.classList.add('highlight');
 		manualButton.disabled = true;
 		autoButton.classList.remove('highlight');
 		autoButton.disabled = false;
-		modeInput = 'manual';
+		modeInput.value = 'manual';
 	}
 };
 
