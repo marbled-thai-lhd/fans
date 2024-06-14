@@ -8,6 +8,7 @@
 #include <EEPROM.h>
 #include "EEPROMHelper.h"
 #include "DataStruct.h"
+#include "env.h"
 
 // Pin assignments
 const int DS18B20_PIN = 14;   // GPIO14 (D5)
