@@ -25,10 +25,8 @@ OneWire oneWire(DS18B20_PIN);
 DallasTemperature ds18b20(&oneWire);
 DHT dht(DHT22_PIN, DHT22);
 LiquidCrystal_I2C lcd(0x3F, 16, 2); // Change 0x27 to your LCD's I2C address
+EEPROMHelper<DataStruct> eepromHelper;
 
-// Network settings
-const char* ssid = "JinZun GF";
-const char* password = "";
 ESP8266WebServer server(80);
 
 bool autoMode = false;
@@ -44,20 +42,21 @@ int temperatureToPWM(float tempC) {
   return map(tempC, 37.0, 41.0, 51, 255);
 }
 
-void setup() {
-  Serial.begin(115200);
-  lcd.init();
-  lcd.backlight();
-  WiFi.begin(ssid, password);
+// Function to connect to WiFi
+void connectToWiFi() {
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to ");
+  Serial.println(WIFI_SSID);
 
+  // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);                      // wait for a second
+    delay(400);                      // wait for a second
     Serial.print(".");
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("WIFI....");
   }
-  
+
   Serial.println("");
   Serial.println("WiFi connected");
   Serial.println("IP address: ");
@@ -65,6 +64,13 @@ void setup() {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print(WiFi.localIP());
+}
+
+void setup() {
+  Serial.begin(115200);
+  lcd.init();
+  lcd.backlight();
+  connectToWiFi();
 
   server.begin();
   ds18b20.begin();
@@ -91,12 +97,8 @@ void setup() {
 
 void loop() {
   server.handleClient();
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(1000);                      // wait for a second
-    Serial.print(".");
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("WIFI....");
+  if (WiFi.status() != WL_CONNECTED) {
+    connectToWiFi();
   }
 }
 
