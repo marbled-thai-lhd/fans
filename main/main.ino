@@ -6,6 +6,8 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <EEPROM.h>
+#include "EEPROMHelper.h"
+#include "DataStruct.h"
 
 // Pin assignments
 const int DS18B20_PIN = 14;   // GPIO14 (D5)
@@ -76,8 +78,10 @@ void setup() {
   pinMode(RELAY2_PIN, OUTPUT);
   digitalWrite(RELAY1_PIN, LOW); // Ensure relay1 is off initially
   digitalWrite(RELAY2_PIN, LOW); // Ensure relay2 is off initially
-  EEPROM.begin(8);
-  pwmValue = EEPROM.read(0);
+
+  DataStruct dataRead = eepromHelper.get();
+  pwmValue = dataRead.pwmValue;
+  autoMode = dataRead.autoMode;
   if (pwmValue < 0 || pwmValue > 255) {
     pwmValue = 51;
   }
@@ -108,9 +112,9 @@ void serverRouteRegister() {
         analogWrite(PWM2_PIN, pwmValue);
         analogWrite(PWM3_PIN, pwmValue);
         analogWrite(PWM4_PIN, pwmValue);
-        EEPROM.write(0, pwmValue);
-        EEPROM.commit();
       }
+      DataStruct dataToWrite = { pwmValue, autoMode };
+      eepromHelper.set(dataToWrite);
     }
 
     server.send(200, "text/html", htmlGenarator());
