@@ -135,7 +135,7 @@ String htmlGenarator() {
     html += autoMode;
     html += ",f:";
     html += pwmValue;
-    html += "};</script><script src=\"https://cdn.jsdelivr.net/gh/marbled-thai-lhd/fans/m1.js\"></script></body>";
+    html += "};</script><script src=\"https://cdn.jsdelivr.net/gh/marbled-thai-lhd/fans/m2.js\"></script></body>";
     return html;
 }
 
