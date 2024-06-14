@@ -123,11 +123,13 @@ const main = function () {
 	autoButton.addEventListener('click', function () {
 		manualControls.style.display = 'none';
 		modeInput.value = 'auto';
+		modeUpdate(1);
 	});
 
 	manualButton.addEventListener('click', function () {
 		manualControls.style.display = 'block';
 		modeInput.value = 'manual';
+		modeUpdate(0);
 	});
 
 	pwmSlider.addEventListener('input', function () {
@@ -293,7 +295,11 @@ const main = function () {
 	updateTemp2Chart(_i.e);
 	updatePwmChart(_i.f);
 
-	if (_i.a == 1) {
+	modeUpdate(_i.a == 1);
+};
+
+const modeUpdate = (auto) => {
+	if (auto) {
 		autoButton.classList.add('highlight');
 		autoButton.disabled = true;
 		manualButton.disabled = false;
@@ -306,7 +312,7 @@ const main = function () {
 		autoButton.disabled = false;
 		modeInput.value = 'manual';
 	}
-};
+}
 
 document.addEventListener('DOMContentLoaded', main);
 
