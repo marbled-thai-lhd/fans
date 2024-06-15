@@ -428,67 +428,66 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Set the CSS text of the <style> element
     styleElement.appendChild(document.createTextNode(css));
-
-	fetch('http://192.168.3.1:3000/json')
-		.then(response => response.json())
-		.then(data => {
-			const labels = data.map(item => item.timestamp);
-			const temp1Data = data.map(item => item.i);
-			const temp2Data = data.map(item => item.e);
-			const fanSpeedData = data.map(item => item.f);
-			const modeData = data.map(item => item.a);
-
-			const ctx = document.getElementById('lineChart').getContext('2d');
-			const lineChart = new Chart(ctx, {
-				type: 'line',
-				data: {
-					labels: labels,
-					datasets: [
-						{
-							label: 'Inverter',
-							data: temp1Data,
-							borderColor: 'red',
-							fill: false
-						},
-						{
-							label: 'Environment',
-							data: temp2Data,
-							borderColor: 'blue',
-							fill: false
-						},
-						{
-							label: 'Fan Speed',
-							data: fanSpeedData,
-							borderColor: 'green',
-							fill: false
-						},
-						{
-							label: 'Mode',
-							data: modeData,
-							borderColor: 'orange',
-							fill: false
+	const chartButton = document.createElement('button');
+	chartButton.textContent = 'Draw Chart';
+	chartButton.addEventListener('click', function () {
+		const labels = data.map(item => item.timestamp);
+		const temp1Data = data.map(item => item.i);
+		const temp2Data = data.map(item => item.e);
+		const fanSpeedData = data.map(item => item.f);
+		const modeData = data.map(item => item.a);
+		const ctx = document.getElementById('lineChart').getContext('2d');
+		const lineChart = new Chart(ctx, {
+			type: 'line',
+			data: {
+				labels: labels,
+				datasets: [
+					{
+						label: 'Inverter',
+						data: temp1Data,
+						borderColor: 'red',
+						fill: false
+					},
+					{
+						label: 'Environment',
+						data: temp2Data,
+						borderColor: 'blue',
+						fill: false
+					},
+					{
+						label: 'Fan Speed',
+						data: fanSpeedData,
+						borderColor: 'green',
+						fill: false
+					},
+					{
+						label: 'Mode',
+						data: modeData,
+						borderColor: 'orange',
+						fill: false
+					}
+				]
+			},
+			options: {
+				responsive: true,
+				scales: {
+					x: {
+						display: true,
+						title: {
+							display: true,
+							text: 'Timestamp'
 						}
-					]
-				},
-				options: {
-					responsive: true,
-					scales: {
-						x: {
+					},
+					y: {
+						display: true,
+						title: {
 							display: true,
-							title: {
-								display: true,
-								text: 'Timestamp'
-							}
-						},
-						y: {
-							display: true,
-							title: {
-								display: true,
-								text: 'Value'
-							}
+							text: 'Value'
 						}
 					}
 				}
-			});
-		})
+			}
+		});
+	});
+	container.appendChild(chartButton);
 });
