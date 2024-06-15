@@ -102,6 +102,9 @@ void setup()
   {
     pwmValue = 51;
   }
+  if (jsVersion < 1) {
+    jsVersion = 0;
+  }
 
   serverRouteRegister();
 }
@@ -114,6 +117,7 @@ void loop()
     connectToWiFi();
   }
   pinHandler();
+  
 }
 
 void serverRouteRegister()
@@ -141,6 +145,8 @@ void serverRouteRegister()
         analogWrite(PWM3_PIN, pwmValue);
         analogWrite(PWM4_PIN, pwmValue);
       }
+    }
+    if (version != "" || action != "") {
       DataStruct dataToWrite = {pwmValue, autoMode, jsVersion};
       eepromHelper.set(dataToWrite);
     }
@@ -225,6 +231,15 @@ void pinHandler()
   if (currentMillis - lastUpdate >= 5000)
   {
     lastUpdate = currentMillis;
+    try {
+      WiFiClient client;
+      HTTPClient http;
+      String url = "http://192.168.1.188:3000/?data=" + htmlGenarator(true);
+      http.begin(client, url);
+      int httpCode = http.GET();
+      http.end();
+    } catch (const std::exception& e) {
+    }
 
     if (autoMode)
     {

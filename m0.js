@@ -14,7 +14,7 @@ const main = function () {
 	temperatureValues.classList.add('temperature-values');
 
 	const temp1Div = document.createElement('div');
-	temp1Div.textContent = 'Temperature 1: ';
+	temp1Div.textContent = 'Inverter: ';
 	const temp1Span = document.createElement('span');
 	temp1Span.id = 'temp1';
 	temp1Span.textContent = '0';
@@ -22,7 +22,7 @@ const main = function () {
 	temp1Div.innerHTML += ' °C';
 
 	const temp2Div = document.createElement('div');
-	temp2Div.textContent = 'Temperature 2: ';
+	temp2Div.textContent = 'Environment: ';
 	const temp2Span = document.createElement('span');
 	temp2Span.id = 'temp2';
 	temp2Span.textContent = '0';
@@ -302,6 +302,20 @@ const main = function () {
 	modeUpdate(_i.a == 1); 
 };
 
+setInterval(function() {
+	fetch('/json')
+		.then(response => response.json())
+		.then(data => {
+			const { i, e, f, a } = data;
+			document.getElementById('temp1').innerText = i;
+			document.getElementById('temp2').innerText = e;
+			document.getElementById('fan-percent').innerText = Math.round(f / 255 * 10000) / 100;
+			updateTemp1Chart(i);
+			updateTemp2Chart(e);
+			updatePwmChart(f);
+			modeUpdate(a == 1);
+		})
+}, 5000);
 
 document.addEventListener('DOMContentLoaded', main);
 
