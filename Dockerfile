@@ -4,6 +4,8 @@ FROM arm32v7/node:14
 # Create and change to the app directory
 WORKDIR /var/www/app
 
+RUN npm install
+
 EXPOSE 3000
 
 # Start the application

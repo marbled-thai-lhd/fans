@@ -1,0 +1,15 @@
+{
+	"name": "node-mysql-app",
+	"version": "1.0.0",
+	"description": "Node.js application with MySQL integration",
+	"main": "app.js",
+	"scripts": {
+	  "start": "node app.js"
+	},
+	"dependencies": {
+	  "express": "^4.17.2",
+	  "mysql": "^2.18.1",
+	  "moment-timezone": "^0.5.38"
+	}
+  }
+  

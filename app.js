@@ -64,18 +64,34 @@ app.get('/', (req, res) => {
   }
 });
 
-// Route to return all data from logs table
+// Route to return data from logs table
 app.get('/json', (req, res) => {
-  const selectQuery = 'SELECT * FROM logs';
+	const { all } = req.query;
   
-  db.query(selectQuery, (err, results) => {
-    if (err) {
-      console.error('Error fetching data:', err);
-      return res.status(500).json({ error: 'Database error' });
-    }
-    res.status(200).json(results);
+	if (all && all.toLowerCase() === 'true') {
+	  // Return all data
+	  const selectQuery = 'SELECT * FROM logs';
+	  db.query(selectQuery, (err, results) => {
+		if (err) {
+		  console.error('Error fetching data:', err);
+		  return res.status(500).json({ error: 'Database error' });
+		}
+		res.status(200).json(results);
+	  });
+	} else {
+	  // Return today's data
+	  const todayStart = moment().startOf('day').format('YYYY-MM-DD HH:mm:ss');
+	  const todayEnd = moment().endOf('day').format('YYYY-MM-DD HH:mm:ss');
+	  const selectQuery = 'SELECT * FROM logs WHERE timestamp >= ? AND timestamp <= ?';
+	  db.query(selectQuery, [todayStart, todayEnd], (err, results) => {
+		if (err) {
+		  console.error('Error fetching data:', err);
+		  return res.status(500).json({ error: 'Database error' });
+		}
+		res.status(200).json(results);
+	  });
+	}
   });
-});
 
 // Start the server
 app.listen(port, () => {
