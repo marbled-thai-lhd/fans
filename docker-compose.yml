@@ -2,8 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: mysql:5.7
-    platform: linux/arm/v7
+    image: arm32v7/mariadb:latest
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: 11111111
