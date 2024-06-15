@@ -1,5 +1,5 @@
 # Use the official Node.js image from the Docker Hub
-FROM node:18
+FROM arm32v7/node:14
 
 # Create and change to the app directory
 WORKDIR /var/www/app
