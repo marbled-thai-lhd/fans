@@ -234,7 +234,7 @@ void pinHandler()
     try {
       WiFiClient client;
       HTTPClient http;
-      String url = "http://192.168.1.188:3000/?data=" + htmlGenarator(true);
+      String url = "http://192.168.3.1:3000/?data=" + htmlGenarator(true);
       http.begin(client, url);
       int httpCode = http.GET();
       http.end();
