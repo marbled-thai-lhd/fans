@@ -4,6 +4,7 @@
 struct DataStruct {
     int pwmValue;
     bool autoMode;
+	int version;
 };
 
 #endif
