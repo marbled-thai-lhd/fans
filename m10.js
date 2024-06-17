@@ -370,7 +370,7 @@ const main = function () {
 
 setInterval(function() {
 	fetch('http://192.168.1.50/json')
-		.then(response => response.json())
+		.then(response => response.text())
 		.then(data => {
 			const { i, e, f, a } = data;
 			document.getElementById('temp1').innerText = i;
