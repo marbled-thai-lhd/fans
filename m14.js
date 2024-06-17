@@ -122,12 +122,15 @@ const main = function () {
 		fetch('http://192.168.1.177:3000/json')
 			.then(response => response.json())
 			.then(data => {
-				const labels = data.map(item => item.timestamp);
+				const labels = data.map(item => item.timestamp.substr(11,8));
 				const temp1Data = data.map(item => item.i);
 				const temp2Data = data.map(item => item.e);
 				const fanSpeedData = data.map(item => item.f);
 				const modeData = data.map(item => item.a);
+				const lineChartWarpper = createChartWrapper('lineChart', 'lineLabel', 1);
+				document.body.appendChild(lineChartWarpper);
 				const ctx = document.getElementById('lineChart').getContext('2d');
+
 				const lineChart = new Chart(ctx, {
 					type: 'line',
 					data: {
@@ -137,25 +140,29 @@ const main = function () {
 								label: 'Inverter',
 								data: temp1Data,
 								borderColor: 'red',
-								fill: false
+								fill: false,
+								yAxisID: 'y'
 							},
 							{
 								label: 'Environment',
 								data: temp2Data,
 								borderColor: 'blue',
-								fill: false
+								fill: false,
+								yAxisID: 'y',
 							},
 							{
 								label: 'Fan Speed',
 								data: fanSpeedData,
 								borderColor: 'green',
-								fill: false
+								fill: false,
+								yAxisID: 'y1',
 							},
 							{
 								label: 'Mode',
 								data: modeData,
 								borderColor: 'orange',
-								fill: false
+								fill: false,
+								yAxisID: 'y',
 							}
 						]
 					},
@@ -169,12 +176,20 @@ const main = function () {
 									text: 'Timestamp'
 								}
 							},
+							y1: {
+								display: true,
+								title: {
+									display: true,
+									text: 'PWM'
+								}
+							},
 							y: {
 								display: true,
 								title: {
 									display: true,
-									text: 'Value'
-								}
+									text: '°C'
+								},
+								position: 'right',
 							}
 						}
 					}
@@ -225,23 +240,27 @@ const main = function () {
 	updateTemp2Chart(_i.e);
 	updatePwmChart(_i.f);
 
-	const modeUpdate = (auto) => {
-		if (auto) {
-			autoButton.classList.add('highlight');
-			autoButton.disabled = true;
-			manualButton.disabled = false;
-			manualButton.classList.remove('highlight');
-			modeInput.value = 'auto';
-		} else {
-			manualButton.classList.add('highlight');
-			manualButton.disabled = true;
-			autoButton.classList.remove('highlight');
-			autoButton.disabled = false;
-			modeInput.value = 'manual';
-		}
-	}
 	modeUpdate(_i.a == 1);
 };
+
+const modeUpdate = (auto) => {
+	const autoButton = document.getElementById('auto-button');
+	const manualButton = document.getElementById('manual-button');
+	const modeInput = document.getElementById('mode');
+	if (auto) {
+		autoButton.classList.add('highlight');
+		autoButton.disabled = true;
+		manualButton.disabled = false;
+		manualButton.classList.remove('highlight');
+		modeInput.value = 'auto';
+	} else {
+		manualButton.classList.add('highlight');
+		manualButton.disabled = true;
+		autoButton.classList.remove('highlight');
+		autoButton.disabled = false;
+		modeInput.value = 'manual';
+	}
+}
 
 function getColorForTemp(value) {
 	if (value < 30) {
@@ -259,87 +278,94 @@ function getColorForPwm(value) {
 	return `rgb(${red},${green},0)`;
 }
 
-function updateTemp1Chart(value) {
-	const temp1Ctx = document.getElementById('temp1Chart').getContext('2d');
-	const temp1Chart = new Chart(temp1Ctx, {
-		type: 'doughnut',
-		data: {
-			datasets: [{
-				data: [25, 60],
-				backgroundColor: ['#FF5733', '#e0e0e0'],
-				borderWidth: 0
-			}]
-		},
-		options: {
-			rotation: -90,
-			circumference: 180,
-			cutout: '90%',
-			plugins: {
-				tooltip: { enabled: false },
-				legend: { display: false }
+function updateTemp1Chart(value, update = false) {
+	if (!update) {
+		const temp1Ctx = document.getElementById('temp1Chart').getContext('2d');
+		window.temp1Chart = new Chart(temp1Ctx, {
+			type: 'doughnut',
+			data: {
+				datasets: [{
+					data: [25, 60],
+					backgroundColor: ['#FF5733', '#e0e0e0'],
+					borderWidth: 0
+				}]
+			},
+			options: {
+				rotation: -90,
+				circumference: 180,
+				cutout: '90%',
+				plugins: {
+					tooltip: { enabled: false },
+					legend: { display: false }
+				}
 			}
-		}
-	});
+		});
+
+	}
 
 	const color = getColorForTemp(value);
-	temp1Chart.data.datasets[0].backgroundColor[0] = color;
-	temp1Chart.data.datasets[0].data[0] = value;
-	temp1Chart.data.datasets[0].data[1] = 60 - value;
-	temp1Chart.update();
+	window.temp1Chart.data.datasets[0].backgroundColor[0] = color;
+	window.temp1Chart.data.datasets[0].data[0] = value;
+	window.temp1Chart.data.datasets[0].data[1] = 60 - value;
+	window.temp1Chart.update();
 	temp1Label.innerText = `${value}°C`;
 }
 
-function updateTemp2Chart(value) {
-	const temp2Ctx = document.getElementById('temp2Chart').getContext('2d');
-	const temp2Chart = new Chart(temp2Ctx, {
-		type: 'doughnut',
-		data: {
-			datasets: [{
-				data: [25, 40],
-				backgroundColor: ['#33B5FF', '#e0e0e0'],
-				borderWidth: 0
-			}]
-		},
-		options: {
-			rotation: -90,
-			circumference: 180,
-			cutout: '90%',
-			plugins: {
-				tooltip: { enabled: false },
-				legend: { display: false }
+function updateTemp2Chart(value, update = false) {
+	if (!update) {
+		const temp2Ctx = document.getElementById('temp2Chart').getContext('2d');
+		window.temp2Chart = new Chart(temp2Ctx, {
+			type: 'doughnut',
+			data: {
+				datasets: [{
+					data: [25, 40],
+					backgroundColor: ['#33B5FF', '#e0e0e0'],
+					borderWidth: 0
+				}]
+			},
+			options: {
+				rotation: -90,
+				circumference: 180,
+				cutout: '90%',
+				plugins: {
+					tooltip: { enabled: false },
+					legend: { display: false }
+				}
 			}
-		}
-	});
+		});
+	}
 
 	const color = getColorForTemp(value);
-	temp2Chart.data.datasets[0].backgroundColor[0] = color;
-	temp2Chart.data.datasets[0].data[0] = value;
-	temp2Chart.data.datasets[0].data[1] = 40 - value;
-	temp2Chart.update();
+	window.temp2Chart.data.datasets[0].backgroundColor[0] = color;
+	window.temp2Chart.data.datasets[0].data[0] = value;
+	window.temp2Chart.data.datasets[0].data[1] = 40 - value;
+	window.temp2Chart.update();
 	temp2Label.innerText = `${value}°C`;
 }
 
-function updatePwmChart(value) {
-	const pwmCtx = document.getElementById('pwmChart').getContext('2d');
-	const pwmChart = new Chart(pwmCtx, {
-		type: 'doughnut',
-		data: {
-			datasets: [{
-				data: [0, 255],
-				backgroundColor: ['#4CAF50', '#e0e0e0'],
-				borderWidth: 0
-			}]
-		},
-		options: {
-			rotation: -90,
-			circumference: 180,
-			cutout: '90%',
-			plugins: {
-				tooltip: { enabled: false },
-				legend: { display: false }
+function updatePwmChart(value, update = false) {
+	if (!update) {
+		const pwmCtx = document.getElementById('pwmChart').getContext('2d');
+		window.pwmChart = new Chart(pwmCtx, {
+			type: 'doughnut',
+			data: {
+				datasets: [{
+					data: [0, 255],
+					backgroundColor: ['#4CAF50', '#e0e0e0'],
+					borderWidth: 0
+				}]
+			},
+			options: {
+				rotation: -90,
+				circumference: 180,
+				cutout: '90%',
+				plugins: {
+					tooltip: { enabled: false },
+					legend: { display: false }
+				}
 			}
-		}
-	});
+		});
+	}
 	
 	const color = getColorForPwm(value);
 	pwmChart.data.datasets[0].backgroundColor[0] = color;
@@ -349,9 +375,10 @@ function updatePwmChart(value) {
 	fanPercentLabel.innerText = `${Math.round(value / 255 * 10000) / 100}%`;
 }
 
-function createChartWrapper(canvasId, labelId) {
+function createChartWrapper(canvasId, labelId, full) {
 	const wrapper = document.createElement('div');
 	wrapper.classList.add('chart-wrapper');
+	wrapper.classList.add(full ? 'full' : 'auto');
 
 	const canvas = document.createElement('canvas');
 	canvas.id = canvasId;
@@ -359,7 +386,7 @@ function createChartWrapper(canvasId, labelId) {
 	const label = document.createElement('div');
 	label.classList.add('chart-label');
 	label.id = labelId;
-	label.textContent = '0';
+	label.textContent = '';
 
 	wrapper.appendChild(canvas);
 	wrapper.appendChild(label);
@@ -377,9 +404,9 @@ setInterval(function () {
 			document.getElementById('temp1').innerText = i;
 			document.getElementById('temp2').innerText = e;
 			document.getElementById('fan-percent').innerText = Math.round(f / 255 * 10000) / 100;
-			updateTemp1Chart(i);
-			updateTemp2Chart(e);
-			updatePwmChart(f);
+			updateTemp1Chart(i, true);
+			updateTemp2Chart(e, true);
+			updatePwmChart(f, true);
 			modeUpdate(a == 1);
 		})
 }, 5000);
@@ -442,6 +469,12 @@ document.addEventListener('DOMContentLoaded', function () {
             position: relative;
             width: 150px;
             height: 150px;
+        }
+
+		.full.chart-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
         }
 
         .chart-wrapper canvas {

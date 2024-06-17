@@ -6,7 +6,7 @@ const port = 3000;
 
 // MySQL connection configuration
 const db = mysql.createConnection({
-	host: process.env.DB_HOST || 'localhost',
+  host: process.env.DB_HOST || 'localhost',
 	user: process.env.DB_USER || 'user',
 	password: process.env.DB_PASSWORD || 'userpassword',
 	database: process.env.DB_NAME || 'mydatabase'
@@ -24,8 +24,8 @@ db.connect((err) => {
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS logs (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      i DECIMAL,
-      e DECIMAL,
+      i DECIMAL(4,2),
+      e DECIMAL(4,2),
       f INT,
       a INT,
       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
