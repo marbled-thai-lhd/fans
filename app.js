@@ -66,7 +66,8 @@ app.get('/', (req, res) => {
 // Route to return data from logs table
 app.get('/json', (req, res) => {
 	const { all } = req.query;
-  
+  // Set headers to allow all origins
+  res.setHeader('Access-Control-Allow-Origin', '*');
 	if (all && all.toLowerCase() === 'true') {
 	  // Return all data
 	  const selectQuery = 'SELECT * FROM logs';
