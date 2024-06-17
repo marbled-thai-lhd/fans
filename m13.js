@@ -371,7 +371,7 @@ setInterval(function () {
 	fetch('http://192.168.1.50/json')
 		.then(response => response.text())
 		.then(d => {
-			const data = d.parse(`${data.replace(/([a-z0-9]+):/g, '"$1": ')}`)
+			const data = JSON.parse(`${d.replace(/([a-z0-9]+):/g, '"$1": ')}`)
 
 			const { i, e, f, a } = data;
 			document.getElementById('temp1').innerText = i;
