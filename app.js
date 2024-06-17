@@ -24,8 +24,8 @@ db.connect((err) => {
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS logs (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      i INT,
-      e INT,
+      i DECIMAL,
+      e DECIMAL,
       f INT,
       a INT,
       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
