@@ -9,11 +9,12 @@
 #include "EEPROMHelper.h"
 #include "DataStruct.h"
 #include "env.h"
+#include <ESP8266HTTPClient.h> 
 
 // Pin assignments
-const int DS18B20_PIN = 14; // GPIO14 (D5)
+const int DS18B20_PIN = 14; // GPIO14 (1)
 const int DHT22_PIN = 12;   // GPIO12 (D6)
-const int RELAY1_PIN = 5;   // GPIO1 (TX)
+const int RELAY1_PIN = 3;   // GPIO1 (RX)
 const int RELAY2_PIN = 13;  // GPIO13 (D7)
 const int PWM1_PIN = 15;    // GPIO15 (D8)
 const int PWM2_PIN = 2;     // GPIO2 (D4)
@@ -30,33 +31,41 @@ EEPROMHelper<DataStruct> eepromHelper;
 
 ESP8266WebServer server(80);
 
-bool screenOn = false;
+bool screenOn = true;
+bool logOn = false;
 bool autoMode = false;
 int pwmValue = 51;
+int r1Value = 0;
+int r2Value = 0;
 int jsVersion = 0;
 float ds18b20Temp = 0.0;
 float am2302Temp = 0.0;
 unsigned long lastUpdate = 0; // Store the last update time
+unsigned long lightOffAt = 0;
+unsigned long lostTempAt = 0;
 
 // Helper function to map temperature to PWM
 int temperatureToPWM(float tempC)
 {
-  if (tempC <= 37.0)
+  float max = 41.0;
+  float min = 37.0;
+  if (tempC <= min)
     return 51; // 20% of 255
-  if (tempC >= 41.0)
+  if (tempC >= max)
     return 255; // 100% of 255
-  return map(tempC, 37.0, 41.0, 51, 255);
+  
+  return 200 / (max - min) * (tempC - min) + 55; 
 }
 
 // Function to connect to WiFi
-void connectToWiFi()
+void connectToWiFi(bool tries)
 {
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to ");
   Serial.println(WIFI_SSID);
 
   // Wait for connection
-  while (WiFi.status() != WL_CONNECTED)
+  while (WiFi.status() != WL_CONNECTED && tries)
   {
     delay(400); // wait for a second
     Serial.print(".");
@@ -79,7 +88,8 @@ void setup()
   Serial.begin(115200);
   lcd.init();
   lcd.backlight();
-  connectToWiFi();
+  lightOffAt = millis();
+  connectToWiFi(true);
 
   server.begin();
   ds18b20.begin();
@@ -91,8 +101,10 @@ void setup()
   pinMode(PWM4_PIN, OUTPUT);
   pinMode(RELAY1_PIN, OUTPUT);
   pinMode(RELAY2_PIN, OUTPUT);
-  digitalWrite(RELAY1_PIN, LOW); // Ensure relay1 is off initially
-  digitalWrite(RELAY2_PIN, LOW); // Ensure relay2 is off initially
+  digitalWrite(RELAY1_PIN, HIGH); 
+  digitalWrite(RELAY2_PIN, HIGH);
+  r1Value = HIGH;
+  r2Value = HIGH;
 
   DataStruct dataRead = eepromHelper.get();
   pwmValue = dataRead.pwmValue;
@@ -114,7 +126,7 @@ void loop()
   server.handleClient();
   if (WiFi.status() != WL_CONNECTED)
   {
-    connectToWiFi();
+    connectToWiFi(false);
   }
   pinHandler();
   
@@ -128,11 +140,22 @@ void serverRouteRegister()
     String pwm = getValue("pwm");
     String version = getValue("version");
     String _screenOn = getValue("screenOn");
+    String _log = getValue("log");
+    String _lightOn = getValue("lightOn");
+    
     if (version != "") {
       jsVersion = version.toInt();
     }
+    if (_lightOn != "") {
+      lcd.backlight();
+      screenOn = true;
+      lightOffAt = millis();
+    }
     if (_screenOn != "") {
       screenOn = _screenOn == "1";
+    }
+    if (_log != "") {
+      logOn = _log == "1";
     }
     if (action != "")
     {
@@ -179,6 +202,12 @@ String htmlGenarator(bool jsonOnly)
   json += autoMode;
   json += ",f:";
   json += pwmValue;
+  json += ",r1:";
+  json += r1Value;
+  json += ",r2:";
+  json += r1Value;
+  json += ",jv:";
+  json += jsVersion;
   json += "}";
 
   if (jsonOnly) return json;
@@ -202,7 +231,7 @@ void pinHandler()
     // Update LCD display
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print("Temp");
+    lcd.print("Temp ");
     if (ds18b20Temp == -127.00)
     {
       lcd.print("--.-");
@@ -223,24 +252,30 @@ void pinHandler()
     lcd.print(" C");
     lcd.setCursor(0, 1);
     lcd.print("Fan: ");
-    lcd.print(pwmValue * 100 / 255, 2);
+    lcd.print(pwmValue * 100 / 255);
     lcd.print("%  ");
     lcd.print(autoMode ? "Auto" : "Manual");
   }
 
+  if (currentMillis - lightOffAt > 60000) {
+    lcd.noBacklight();
+    screenOn = false;
+    lcd.clear();
+  }
   if (currentMillis - lastUpdate >= 5000)
   {
     lastUpdate = currentMillis;
-    try {
+    if (logOn) {
+    // try {
       WiFiClient client;
       HTTPClient http;
-      String url = "http://192.168.3.1:3000/?data=" + htmlGenarator(true);
+      String url = "http://192.168.1.177:3000/?data=" + htmlGenarator(true);
       http.begin(client, url);
       int httpCode = http.GET();
       http.end();
-    } catch (const std::exception& e) {
+    // } catch (const std::exception& e) {
+    // }
     }
-
     if (autoMode)
     {
       pwmValue = temperatureToPWM(ds18b20Temp);
@@ -250,41 +285,33 @@ void pinHandler()
       analogWrite(PWM4_PIN, pwmValue);
     }
 
-    if (!isnan(am2302Temp) && ds18b20Temp != -127.00)
+    if (ds18b20Temp != -127.00)
     {
-      if (ds18b20Temp < (am2302Temp + 2) || ds18b20Temp < 36)
+      if (ds18b20Temp < 35)
       {
-        digitalWrite(RELAY1_PIN, LOW); // Turn off relay1
+        digitalWrite(RELAY1_PIN, HIGH);
+        r1Value = HIGH;
+        digitalWrite(RELAY2_PIN, HIGH); // Turn off relay2
+        r2Value = HIGH;
       }
-      else
+      else if (ds18b20Temp > 36.5)
       {
-        digitalWrite(RELAY1_PIN, HIGH); // Turn on relay1
+        digitalWrite(RELAY1_PIN, LOW); 
+        r1Value = LOW;
+        digitalWrite(RELAY2_PIN, LOW); // Turn on relay2
+        r2Value = LOW;
       }
     }
 
-    // Control relay2 based on DS18B20 temperature
-    if (ds18b20Temp != -127.00)
+    if (ds18b20Temp == -127.00)
     {
-      digitalWrite(RELAY2_PIN, HIGH); // Turn on relay2
-    }
-    else
-    {
-      digitalWrite(RELAY2_PIN, LOW); // Turn off relay2
+      if (lostTempAt != 0 && currentMillis - lostTempAt > 60000) {
+        digitalWrite(RELAY2_PIN, HIGH); // Turn off relay2
+        r2Value = HIGH;
+      }
+    } else {
+      lostTempAt = 0;
     }
   }
   
 }
-
-/*
-Wired Connections:
-- Connect DS18B20 data pin to GPIO14 (D5)
-- Connect DHT22 data pin to GPIO12 (D6)
-- Connect relay1 to GPIO16 (D0)
-- Connect relay2 to GPIO13 (D7)
-- Connect PWM1 to GPIO15 (D8)
-- Connect PWM2 to GPIO2 (D4)
-- Connect PWM3 to GPIO0 (D3)
-- Connect PWM4 to GPIO4 (D2)
-- Connect I2C SDA pin to GPIO4 (D2)
-- Connect I2C SCL pin to GPIO5 (D1)
-*/

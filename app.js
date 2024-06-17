@@ -7,9 +7,9 @@ const port = 3000;
 // MySQL connection configuration
 const db = mysql.createConnection({
   host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'user',
-  password: process.env.DB_PASSWORD || 'userpassword',
-  database: process.env.DB_NAME || 'mydatabase'
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || 'N6g1VVRIJGpc',
+  database: process.env.DB_NAME || 'dummy'
 });
 
 // Connect to MySQL
@@ -39,20 +39,19 @@ db.connect((err) => {
 
 // Route to handle saving data
 app.get('/', (req, res) => {
-  const data = req.query.data;
+  const data = `${req.query.data.replaceAll(/([a-z0-9]+):/g, '"$1": ')}`;
+  console.log(data)
   if (!data) {
     return res.status(400).json({ error: 'No data provided' });
   }
   
   try {
     const jsonData = JSON.parse(data);
-    const { i, e, f, a } = jsonData;
     
     // Save data to database with timestamp in UTC+7
     const timestamp = moment().tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss');
     const insertQuery = 'INSERT INTO logs (i, e, f, a, timestamp) VALUES (?, ?, ?, ?, ?)';
-    
-    db.query(insertQuery, [i, e, f, a, timestamp], (err, result) => {
+    db.query(insertQuery, [jsonData.i, jsonData.e, jsonData.f, jsonData.a, timestamp], (err, result) => {
       if (err) {
         console.error('Error inserting data:', err);
         return res.status(500).json({ error: 'Database error' });
