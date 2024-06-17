@@ -39,7 +39,7 @@ db.connect((err) => {
 
 // Route to handle saving data
 app.get('/', (req, res) => {
-  const data = `${req.query.data.replaceAll(/([a-z0-9]+):/g, '"$1": ')}`;
+  const data = `${req.query.data.replace(/([a-z0-9]+):/g, '"$1": ')}`;
   console.log(data)
   if (!data) {
     return res.status(400).json({ error: 'No data provided' });
