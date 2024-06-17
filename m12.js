@@ -218,72 +218,6 @@ const main = function () {
 		updatePwmChart(pwmSlider.value);
 	});
 
-
-
-	const temp1Ctx = document.getElementById('temp1Chart').getContext('2d');
-	const temp2Ctx = document.getElementById('temp2Chart').getContext('2d');
-	const pwmCtx = document.getElementById('pwmChart').getContext('2d');
-
-	const temp1Chart = new Chart(temp1Ctx, {
-		type: 'doughnut',
-		data: {
-			datasets: [{
-				data: [25, 60],
-				backgroundColor: ['#FF5733', '#e0e0e0'],
-				borderWidth: 0
-			}]
-		},
-		options: {
-			rotation: -90,
-			circumference: 180,
-			cutout: '90%',
-			plugins: {
-				tooltip: { enabled: false },
-				legend: { display: false }
-			}
-		}
-	});
-
-	const temp2Chart = new Chart(temp2Ctx, {
-		type: 'doughnut',
-		data: {
-			datasets: [{
-				data: [25, 40],
-				backgroundColor: ['#33B5FF', '#e0e0e0'],
-				borderWidth: 0
-			}]
-		},
-		options: {
-			rotation: -90,
-			circumference: 180,
-			cutout: '90%',
-			plugins: {
-				tooltip: { enabled: false },
-				legend: { display: false }
-			}
-		}
-	});
-
-	const pwmChart = new Chart(pwmCtx, {
-		type: 'doughnut',
-		data: {
-			datasets: [{
-				data: [0, 255],
-				backgroundColor: ['#4CAF50', '#e0e0e0'],
-				borderWidth: 0
-			}]
-		},
-		options: {
-			rotation: -90,
-			circumference: 180,
-			cutout: '90%',
-			plugins: {
-				tooltip: { enabled: false },
-				legend: { display: false }
-			}
-		}
-	});
-
 	document.getElementById('temp1').innerText = _i.i;
 	document.getElementById('temp2').innerText = _i.e;
 	document.getElementById('fan-percent').innerText = Math.round(_i.f / 255 * 10000) / 100;
@@ -326,6 +260,27 @@ function getColorForPwm(value) {
 }
 
 function updateTemp1Chart(value) {
+	const temp1Ctx = document.getElementById('temp1Chart').getContext('2d');
+	const temp1Chart = new Chart(temp1Ctx, {
+		type: 'doughnut',
+		data: {
+			datasets: [{
+				data: [25, 60],
+				backgroundColor: ['#FF5733', '#e0e0e0'],
+				borderWidth: 0
+			}]
+		},
+		options: {
+			rotation: -90,
+			circumference: 180,
+			cutout: '90%',
+			plugins: {
+				tooltip: { enabled: false },
+				legend: { display: false }
+			}
+		}
+	});
+
 	const color = getColorForTemp(value);
 	temp1Chart.data.datasets[0].backgroundColor[0] = color;
 	temp1Chart.data.datasets[0].data[0] = value;
@@ -335,6 +290,27 @@ function updateTemp1Chart(value) {
 }
 
 function updateTemp2Chart(value) {
+	const temp2Ctx = document.getElementById('temp2Chart').getContext('2d');
+	const temp2Chart = new Chart(temp2Ctx, {
+		type: 'doughnut',
+		data: {
+			datasets: [{
+				data: [25, 40],
+				backgroundColor: ['#33B5FF', '#e0e0e0'],
+				borderWidth: 0
+			}]
+		},
+		options: {
+			rotation: -90,
+			circumference: 180,
+			cutout: '90%',
+			plugins: {
+				tooltip: { enabled: false },
+				legend: { display: false }
+			}
+		}
+	});
+
 	const color = getColorForTemp(value);
 	temp2Chart.data.datasets[0].backgroundColor[0] = color;
 	temp2Chart.data.datasets[0].data[0] = value;
@@ -344,6 +320,27 @@ function updateTemp2Chart(value) {
 }
 
 function updatePwmChart(value) {
+	const pwmCtx = document.getElementById('pwmChart').getContext('2d');
+	const pwmChart = new Chart(pwmCtx, {
+		type: 'doughnut',
+		data: {
+			datasets: [{
+				data: [0, 255],
+				backgroundColor: ['#4CAF50', '#e0e0e0'],
+				borderWidth: 0
+			}]
+		},
+		options: {
+			rotation: -90,
+			circumference: 180,
+			cutout: '90%',
+			plugins: {
+				tooltip: { enabled: false },
+				legend: { display: false }
+			}
+		}
+	});
+	
 	const color = getColorForPwm(value);
 	pwmChart.data.datasets[0].backgroundColor[0] = color;
 	pwmChart.data.datasets[0].data[0] = value;
