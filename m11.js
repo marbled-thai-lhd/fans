@@ -119,67 +119,67 @@ const main = function () {
 	const chartButton = document.createElement('button');
 	chartButton.textContent = 'Draw Chart';
 	chartButton.addEventListener('click', function () {
-	fetch('http://192.168.1.177:3000/json')
-		.then(response => response.json())
-		.then(data => {
-			const labels = data.map(item => item.timestamp);
-			const temp1Data = data.map(item => item.i);
-			const temp2Data = data.map(item => item.e);
-			const fanSpeedData = data.map(item => item.f);
-			const modeData = data.map(item => item.a);
-			const ctx = document.getElementById('lineChart').getContext('2d');
-			const lineChart = new Chart(ctx, {
-				type: 'line',
-				data: {
-					labels: labels,
-					datasets: [
-						{
-							label: 'Inverter',
-							data: temp1Data,
-							borderColor: 'red',
-							fill: false
-						},
-						{
-							label: 'Environment',
-							data: temp2Data,
-							borderColor: 'blue',
-							fill: false
-						},
-						{
-							label: 'Fan Speed',
-							data: fanSpeedData,
-							borderColor: 'green',
-							fill: false
-						},
-						{
-							label: 'Mode',
-							data: modeData,
-							borderColor: 'orange',
-							fill: false
-						}
-					]
-				},
-				options: {
-					responsive: true,
-					scales: {
-						x: {
-							display: true,
-							title: {
-								display: true,
-								text: 'Timestamp'
+		fetch('http://192.168.1.177:3000/json')
+			.then(response => response.json())
+			.then(data => {
+				const labels = data.map(item => item.timestamp);
+				const temp1Data = data.map(item => item.i);
+				const temp2Data = data.map(item => item.e);
+				const fanSpeedData = data.map(item => item.f);
+				const modeData = data.map(item => item.a);
+				const ctx = document.getElementById('lineChart').getContext('2d');
+				const lineChart = new Chart(ctx, {
+					type: 'line',
+					data: {
+						labels: labels,
+						datasets: [
+							{
+								label: 'Inverter',
+								data: temp1Data,
+								borderColor: 'red',
+								fill: false
+							},
+							{
+								label: 'Environment',
+								data: temp2Data,
+								borderColor: 'blue',
+								fill: false
+							},
+							{
+								label: 'Fan Speed',
+								data: fanSpeedData,
+								borderColor: 'green',
+								fill: false
+							},
+							{
+								label: 'Mode',
+								data: modeData,
+								borderColor: 'orange',
+								fill: false
 							}
-						},
-						y: {
-							display: true,
-							title: {
+						]
+					},
+					options: {
+						responsive: true,
+						scales: {
+							x: {
 								display: true,
-								text: 'Value'
+								title: {
+									display: true,
+									text: 'Timestamp'
+								}
+							},
+							y: {
+								display: true,
+								title: {
+									display: true,
+									text: 'Value'
+								}
 							}
 						}
 					}
-				}
+				});
 			});
-		});
 	});
 	container.appendChild(chartButton);
 
@@ -218,66 +218,7 @@ const main = function () {
 		updatePwmChart(pwmSlider.value);
 	});
 
-	function getColorForTemp(value) {
-		if (value < 30) {
-			return 'skyblue';
-		} else if (value > 45) {
-			return 'red';
-		} else {
-			return 'orange';
-		}
-	}
 
-	function getColorForPwm(value) {
-		const red = Math.min(255, Math.floor(255 * value / 255));
-		const green = Math.min(255, Math.floor(255 * (255 - value) / 255));
-		return `rgb(${red},${green},0)`;
-	}
-
-	function updateTemp1Chart(value) {
-		const color = getColorForTemp(value);
-		temp1Chart.data.datasets[0].backgroundColor[0] = color;
-		temp1Chart.data.datasets[0].data[0] = value;
-		temp1Chart.data.datasets[0].data[1] = 60 - value;
-		temp1Chart.update();
-		temp1Label.innerText = `${value}°C`;
-	}
-
-	function updateTemp2Chart(value) {
-		const color = getColorForTemp(value);
-		temp2Chart.data.datasets[0].backgroundColor[0] = color;
-		temp2Chart.data.datasets[0].data[0] = value;
-		temp2Chart.data.datasets[0].data[1] = 40 - value;
-		temp2Chart.update();
-		temp2Label.innerText = `${value}°C`;
-	}
-
-	function updatePwmChart(value) {
-		const color = getColorForPwm(value);
-		pwmChart.data.datasets[0].backgroundColor[0] = color;
-		pwmChart.data.datasets[0].data[0] = value;
-		pwmChart.data.datasets[0].data[1] = 255 - value;
-		pwmChart.update();
-		fanPercentLabel.innerText = `${Math.round(value / 255 * 10000) / 100}%`;
-	}
-
-	function createChartWrapper(canvasId, labelId) {
-		const wrapper = document.createElement('div');
-		wrapper.classList.add('chart-wrapper');
-
-		const canvas = document.createElement('canvas');
-		canvas.id = canvasId;
-
-		const label = document.createElement('div');
-		label.classList.add('chart-label');
-		label.id = labelId;
-		label.textContent = '0';
-
-		wrapper.appendChild(canvas);
-		wrapper.appendChild(label);
-
-		return wrapper;
-	}
 
 	const temp1Ctx = document.getElementById('temp1Chart').getContext('2d');
 	const temp2Ctx = document.getElementById('temp2Chart').getContext('2d');
@@ -365,13 +306,76 @@ const main = function () {
 			modeInput.value = 'manual';
 		}
 	}
-	modeUpdate(_i.a == 1); 
+	modeUpdate(_i.a == 1);
 };
 
-setInterval(function() {
+function getColorForTemp(value) {
+	if (value < 30) {
+		return 'skyblue';
+	} else if (value > 45) {
+		return 'red';
+	} else {
+		return 'orange';
+	}
+}
+
+function getColorForPwm(value) {
+	const red = Math.min(255, Math.floor(255 * value / 255));
+	const green = Math.min(255, Math.floor(255 * (255 - value) / 255));
+	return `rgb(${red},${green},0)`;
+}
+
+function updateTemp1Chart(value) {
+	const color = getColorForTemp(value);
+	temp1Chart.data.datasets[0].backgroundColor[0] = color;
+	temp1Chart.data.datasets[0].data[0] = value;
+	temp1Chart.data.datasets[0].data[1] = 60 - value;
+	temp1Chart.update();
+	temp1Label.innerText = `${value}°C`;
+}
+
+function updateTemp2Chart(value) {
+	const color = getColorForTemp(value);
+	temp2Chart.data.datasets[0].backgroundColor[0] = color;
+	temp2Chart.data.datasets[0].data[0] = value;
+	temp2Chart.data.datasets[0].data[1] = 40 - value;
+	temp2Chart.update();
+	temp2Label.innerText = `${value}°C`;
+}
+
+function updatePwmChart(value) {
+	const color = getColorForPwm(value);
+	pwmChart.data.datasets[0].backgroundColor[0] = color;
+	pwmChart.data.datasets[0].data[0] = value;
+	pwmChart.data.datasets[0].data[1] = 255 - value;
+	pwmChart.update();
+	fanPercentLabel.innerText = `${Math.round(value / 255 * 10000) / 100}%`;
+}
+
+function createChartWrapper(canvasId, labelId) {
+	const wrapper = document.createElement('div');
+	wrapper.classList.add('chart-wrapper');
+
+	const canvas = document.createElement('canvas');
+	canvas.id = canvasId;
+
+	const label = document.createElement('div');
+	label.classList.add('chart-label');
+	label.id = labelId;
+	label.textContent = '0';
+
+	wrapper.appendChild(canvas);
+	wrapper.appendChild(label);
+
+	return wrapper;
+}
+
+setInterval(function () {
 	fetch('http://192.168.1.50/json')
 		.then(response => response.text())
-		.then(data => {
+		.then(d => {
+			const data = d.parse(`${data.replace(/([a-z0-9]+):/g, '"$1": ')}`)
+
 			const { i, e, f, a } = data;
 			document.getElementById('temp1').innerText = i;
 			document.getElementById('temp2').innerText = e;
@@ -386,12 +390,12 @@ setInterval(function() {
 document.addEventListener('DOMContentLoaded', main);
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Create a <style> element
-    const styleElement = document.createElement('style');
-    document.head.appendChild(styleElement);
+	// Create a <style> element
+	const styleElement = document.createElement('style');
+	document.head.appendChild(styleElement);
 
-    // Define CSS rules as strings
-    const css = `
+	// Define CSS rules as strings
+	const css = `
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -492,6 +496,6 @@ document.addEventListener('DOMContentLoaded', function () {
             transition: background-color 0.3s ease;}
     `;
 
-    // Set the CSS text of the <style> element
-    styleElement.appendChild(document.createTextNode(css));
+	// Set the CSS text of the <style> element
+	styleElement.appendChild(document.createTextNode(css));
 });
