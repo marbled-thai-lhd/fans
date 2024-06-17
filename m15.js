@@ -117,6 +117,7 @@ const main = function () {
 	container.appendChild(chartContainer);
 	container.appendChild(form);
 	const chartButton = document.createElement('button');
+	chartButton.style.marginTop = '10px';
 	chartButton.textContent = 'Draw Chart';
 	chartButton.addEventListener('click', function () {
 		fetch('http://192.168.1.177:3000/json')
@@ -239,7 +240,7 @@ const main = function () {
 	updateTemp1Chart(_i.i);
 	updateTemp2Chart(_i.e);
 	updatePwmChart(_i.f);
-
+	manualControls.style.display = _i.a == 1 ? 'none' : 'block';
 	modeUpdate(_i.a == 1);
 };
 
@@ -407,6 +408,7 @@ setInterval(function () {
 			updateTemp1Chart(i, true);
 			updateTemp2Chart(e, true);
 			updatePwmChart(f, true);
+			document.getElementById('manual-controls').style.display = _i.a == 1 ? 'none' : 'block';
 			modeUpdate(a == 1);
 		})
 }, 5000);
@@ -420,15 +422,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	// Define CSS rules as strings
 	const css = `
+		*{
+			margin: 0;
+			padding: 0;
+		}
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+			margin: 20px;
             background-color: #f0f0f0;
         }
 
         .container {
-            max-width: 600px;
+            width: calc(100vw - 80px);
             margin: 0 auto;
             background-color: white;
             padding: 20px;
@@ -523,7 +529,42 @@ document.addEventListener('DOMContentLoaded', function () {
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s ease;}
+            transition: background-color 0.3s ease;
+		}
+		@media only screen and (max-width: 1100px) {
+			* {
+				font-size: 40px;
+			}
+			.chart-wrapper {
+				position: relative;
+				width: 45%;
+				height: auto;
+			}
+			.temperature-values{
+				flex-direction: column;
+			    justify-content: left;
+    			align-items: start;
+				margin-top: 40px;
+				margin-bottom: 0px;
+			}
+			.chart-container {
+				flex-wrap: wrap;
+			}
+			button {
+				font-size: 65px;
+			}
+			button.highlight::before {
+				left: 20px;
+				top: 25px;
+				width: 5px;
+				border-bottom: 10px solid #4D7C2A;
+				height: 24px;
+				border-right: 10px solid #4D7C2A;
+			}
+			button.highlight {
+				padding-left: 50px;
+			}
+		}
     `;
 
 	// Set the CSS text of the <style> element
