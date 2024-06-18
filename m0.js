@@ -1,346 +1,347 @@
+const d = document;
+const dc = e => d.createElement(e);
+const dgID = e => d.getElementById(e);
 const script = document.createElement('script');
 script.src = 'https://cdn.jsdelivr.net/npm/chart.js';
 document.head.appendChild(script);
+
+const cE = (n, id, clN, txt) => {
+	const e = dc(n);
+	id && (e.id = id);
+	clN && e.classList.add(clN);
+	txt && (e.textContent = txt);
+	return e;
+}
+
+const cT = (txt, id, unit = ' °C') => {
+	const d = cE('div', undefined, undefined, txt);
+	const s = cE('span', id, undefined, 0);
+	d.appendChild(s);
+	d.innerHTML += unit;
+	return d;
+}
+
+const cW = (canvasId, labelId, full) => {
+	const wrapper = document.createElement('div');
+	wrapper.classList.add('chart-wrapper');
+	wrapper.classList.add(full ? 'full' : 'auto');
+
+	const canvas = document.createElement('canvas');
+	canvas.id = canvasId;
+
+	const label = document.createElement('div');
+	label.classList.add('chart-label');
+	label.id = labelId;
+	label.textContent = '';
+
+	wrapper.appendChild(canvas);
+	wrapper.appendChild(label);
+
+	return wrapper;
+}
+
 const main = function () {
 	if (typeof Chart === "undefined") return setTimeout(main, 200);
-	// Create main elements
-	const container = document.createElement('div');
-	container.classList.add('container');
+	const container = cE('div', 'container', 'container');
+	container.appendChild(cE('h1',undefined,undefined,'Temperature and Fan Control'));
 
-	const h1 = document.createElement('h1');
-	h1.textContent = 'Temperature and Fan Control';
-
-	const temperatureValues = document.createElement('div');
-	temperatureValues.classList.add('temperature-values');
-
-	const temp1Div = document.createElement('div');
-	temp1Div.textContent = 'Inverter: ';
-	const temp1Span = document.createElement('span');
-	temp1Span.id = 'temp1';
-	temp1Span.textContent = '0';
-	temp1Div.appendChild(temp1Span);
-	temp1Div.innerHTML += ' °C';
-
-	const temp2Div = document.createElement('div');
-	temp2Div.textContent = 'Environment: ';
-	const temp2Span = document.createElement('span');
-	temp2Span.id = 'temp2';
-	temp2Span.textContent = '0';
-	temp2Div.appendChild(temp2Span);
-	temp2Div.innerHTML += ' °C';
-
-	const fanSpeedDiv = document.createElement('div');
-	fanSpeedDiv.textContent = 'Fan Speed: ';
-	const fanSpeedSpan = document.createElement('span');
-	fanSpeedSpan.id = 'fan-percent';
-	fanSpeedSpan.textContent = '0';
-	fanSpeedDiv.appendChild(fanSpeedSpan);
-	fanSpeedDiv.innerHTML += '%';
-
-	temperatureValues.appendChild(temp1Div);
-	temperatureValues.appendChild(temp2Div);
-	temperatureValues.appendChild(fanSpeedDiv);
-
-	const chartContainer = document.createElement('div');
-	chartContainer.classList.add('chart-container');
-
-	// Chart wrapper for Temperature 1
-	const temp1ChartWrapper = createChartWrapper('temp1Chart', 'temp1Label');
-
-	// Chart wrapper for Temperature 2
-	const temp2ChartWrapper = createChartWrapper('temp2Chart', 'temp2Label');
-
-	// Chart wrapper for PWM
-	const pwmChartWrapper = createChartWrapper('pwmChart', 'fanPercentLabel');
-
-	chartContainer.appendChild(temp1ChartWrapper);
-	chartContainer.appendChild(temp2ChartWrapper);
-	chartContainer.appendChild(pwmChartWrapper);
-
-	const form = document.createElement('form');
-	form.id = 'control-form';
-
-	const controlButtons = document.createElement('div');
-	controlButtons.classList.add('control-buttons');
-
-	const autoButton = document.createElement('button');
-	autoButton.type = 'button';
-	autoButton.id = 'auto-button';
-	autoButton.textContent = 'Auto';
-
-	const manualButton = document.createElement('button');
-	manualButton.type = 'button';
-	manualButton.id = 'manual-button';
-	manualButton.textContent = 'Manual';
-
-	controlButtons.appendChild(autoButton);
-	controlButtons.appendChild(manualButton);
-
-	const manualControls = document.createElement('div');
-	manualControls.id = 'manual-controls';
-	manualControls.style.display = 'none';
-
-	const pwmLabel = document.createElement('label');
-	pwmLabel.setAttribute('for', 'pwm-slider');
-	pwmLabel.textContent = 'PWM: ';
-	pwmLabel.innerHTML += '';
-
-	const pwmSlider = document.createElement('input');
-	pwmSlider.type = 'range';
-	pwmSlider.id = 'pwm-slider';
-	pwmSlider.min = '0';
-	pwmSlider.max = '255';
-	pwmSlider.value = _i.f;
-	pwmSlider.name = 'pwm';
-
-	manualControls.appendChild(pwmLabel);
-	manualControls.appendChild(pwmSlider);
-
-	const modeInput = document.createElement('input');
-	modeInput.type = 'hidden';
-	modeInput.name = 'mode';
-	modeInput.id = 'mode';
-	modeInput.value = 'auto';
-
-	const submitButton = document.createElement('button');
-	submitButton.type = 'submit';
-	submitButton.textContent = 'Submit';
-
-	form.appendChild(controlButtons);
-	form.appendChild(manualControls);
-	form.appendChild(modeInput);
-	form.appendChild(submitButton);
-
-	container.appendChild(h1);
-	container.appendChild(temperatureValues);
+	const chartContainer = cE('div', undefined, 'chart-container');
+	chartContainer.appendChild(cW('temp1Chart', 'temp1Label'));
+	chartContainer.appendChild(cW('temp2Chart', 'temp2Label'));
+	chartContainer.appendChild(cW('pwmChart', 'fanPercentLabel'));
 	container.appendChild(chartContainer);
+
+	const form = cE('form', 'control-form');
+	const groupSetting = cE('div', undefined, 'flex-box')
+	const controlButtons = cE('div', 'control-buttons', 'toggle');
+	
+	const chkAuto = cE('input', 'choice1');
+	chkAuto.name = 'mode';
+	chkAuto.value = "auto"
+	chkAuto.type = 'radio';
+	controlButtons.appendChild(chkAuto);
+	const lblFor1 = cE('label', undefined, undefined, "Auto")
+	lblFor1.htmlFor = 'choice1';
+	controlButtons.appendChild(lblFor1);
+
+	const chkManual = cE('input', 'choice2');
+	chkManual.name = 'mode';
+	chkManual.value = "manual"
+	chkManual.type = 'radio';
+	controlButtons.appendChild(chkManual);
+	const lblFor2 = cE('label', undefined, undefined, "Manual")
+	lblFor2.htmlFor = 'choice2';
+	controlButtons.appendChild(lblFor2);
+
+	const flap = cE('div', 'flap');
+	flap.appendChild(cE('span', undefined, 'content'))
+	controlButtons.appendChild(flap);
+	groupSetting.appendChild(controlButtons);
+
+	const pwm = cE('input', 'pwm-slider');
+	pwm.type = 'range';
+	pwm.min = '0';
+	pwm.max = '255';
+	pwm.value = _i.f;
+	pwm.name = 'pwm';
+	groupSetting.appendChild(pwm);
+	form.appendChild(groupSetting);
+	form.appendChild(cE('button', undefined, undefined, 'Setting'));
 	container.appendChild(form);
 
-	// Append container to body
-	document.body.appendChild(container);
-
-	// Event listeners
-	autoButton.addEventListener('click', function () {
-		manualControls.style.display = 'none';
-		modeInput.value = 'auto';
-		modeUpdate(1);
+	const chartButton = cE('button', undefined, undefined, 'Draw Chart');
+	chartButton.addEventListener('click', () => {
+		fetch('http://192.168.1.177:3000/json')
+			.then(response => response.json())
+			.then(data => {
+				const oneMinute = 60 * 1000;
+				data.forEach(e => e.r1 == 1 ? f = 0 : '');
+				data = data.sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+					.reduce((acc, item) => {
+						const currentTimestamp = new Date(item.timestamp).getTime();
+						if (item.r1 == 1) item.f = 0;
+						if (acc.length === 0 || currentTimestamp >= acc[acc.length - 1].timestamp + oneMinute) {
+							acc.push({ ...item, timestamp: currentTimestamp });
+						}
+						return acc;
+					}, [])
+					.map(item => {
+						return { ...item, timestamp: new Date(item.timestamp).toISOString() };
+					});
+				const labels = data.map(item => item.timestamp.substr(11,8));
+				const temp1Data = data.map(item => item.i);
+				const temp2Data = data.map(item => item.e);
+				const fanSpeedData = data.map(item => item.f);
+				const lineChartWarpper = cW('lineChart', 'lineLabel', 1);
+				document.body.appendChild(lineChartWarpper);
+				const ctx = dgID('lineChart').getContext('2d');
+				new Chart(ctx, {
+					type: 'line',
+					data: {
+						labels: labels,
+						datasets: [
+							{
+								label: 'Inverter',
+								data: temp1Data,
+								borderColor: 'red',
+								fill: false,
+								yAxisID: 'y'
+							},
+							{
+								label: 'Environment',
+								data: temp2Data,
+								borderColor: 'blue',
+								fill: false,
+								yAxisID: 'y',
+							},
+							{
+								label: 'Fan Speed',
+								data: fanSpeedData,
+								borderColor: 'green',
+								fill: false,
+								yAxisID: 'y1',
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						scales: {
+							x: {
+								display: true,
+								title: {
+									display: true,
+									text: 'Timestamp'
+								}
+							},
+							y1: {
+								display: true,
+								max: 260,
+								title: {
+									display: true,
+									text: 'PWM'
+								}
+							},
+							y: {
+								display: true,
+								min: Math.min(...temp1Data, ...temp2Data) - 0.5,
+								max: Math.max(...temp1Data, ...temp2Data) + 0.5,
+								title: {
+									display: true,
+									text: '°C'
+								},
+								position: 'right',
+							}
+						}
+					}
+				});
+			});
 	});
-
-	manualButton.addEventListener('click', function () {
-		manualControls.style.display = 'block';
-		modeInput.value = 'manual';
-		modeUpdate(0);
+	container.appendChild((chartButton.style.margin = '20px 20px 0 0', chartButton));
+	const lcd = cE('button', undefined, undefined, 'LCD on');
+	lcd.addEventListener('click', () => {
+		fetch('/?lightOn=1');
+		setInterval(() => {
+			fetch('/?lightOn=1')
+		}, 60000)
+		lcd.disabled= true;
 	});
-
-	pwmSlider.addEventListener('input', function () {
-		updatePwmChart(pwmSlider.value);
-	});
-
-	// Function to create chart wrapper
-	function createChartWrapper(canvasId, labelId) {
-		const wrapper = document.createElement('div');
-		wrapper.classList.add('chart-wrapper');
-
-		const canvas = document.createElement('canvas');
-		canvas.id = canvasId;
-
-		const label = document.createElement('div');
-		label.classList.add('chart-label');
-		label.id = labelId;
-		label.textContent = '0';
-
-		wrapper.appendChild(canvas);
-		wrapper.appendChild(label);
-
-		return wrapper;
-	}
-
-	autoButton.addEventListener('click', function () {
-		manualControls.style.display = 'none';
-		modeInput.value = 'auto';
-	});
-
-	manualButton.addEventListener('click', function () {
-		manualControls.style.display = 'block';
-		modeInput.value = 'manual';
-	});
-
-	pwmSlider.addEventListener('input', function () {
-		pwmValue.innerText = pwmSlider.value;
-		updatePwmChart(pwmSlider.value);
-	});
-
-	function getColorForTemp(value) {
-		if (value < 30) {
-			return 'skyblue';
-		} else if (value > 45) {
-			return 'red';
-		} else {
-			return 'orange';
-		}
-	}
-
-	function getColorForPwm(value) {
-		const red = Math.min(255, Math.floor(255 * value / 255));
-		const green = Math.min(255, Math.floor(255 * (255 - value) / 255));
-		return `rgb(${red},${green},0)`;
-	}
-
-	function updateTemp1Chart(value) {
-		const color = getColorForTemp(value);
-		temp1Chart.data.datasets[0].backgroundColor[0] = color;
-		temp1Chart.data.datasets[0].data[0] = value;
-		temp1Chart.data.datasets[0].data[1] = 60 - value;
-		temp1Chart.update();
-		temp1Label.innerText = `${value}°C`;
-	}
-
-	function updateTemp2Chart(value) {
-		const color = getColorForTemp(value);
-		temp2Chart.data.datasets[0].backgroundColor[0] = color;
-		temp2Chart.data.datasets[0].data[0] = value;
-		temp2Chart.data.datasets[0].data[1] = 40 - value;
-		temp2Chart.update();
-		temp2Label.innerText = `${value}°C`;
-	}
-
-	function updatePwmChart(value) {
-		const color = getColorForPwm(value);
-		pwmChart.data.datasets[0].backgroundColor[0] = color;
-		pwmChart.data.datasets[0].data[0] = value;
-		pwmChart.data.datasets[0].data[1] = 255 - value;
-		pwmChart.update();
-		fanPercentLabel.innerText = `${Math.round(value / 255 * 10000) / 100}%`;
-	}
-
-	const temp1Ctx = document.getElementById('temp1Chart').getContext('2d');
-	const temp2Ctx = document.getElementById('temp2Chart').getContext('2d');
-	const pwmCtx = document.getElementById('pwmChart').getContext('2d');
-
-	const temp1Chart = new Chart(temp1Ctx, {
-		type: 'doughnut',
-		data: {
-			datasets: [{
-				data: [25, 60],
-				backgroundColor: ['#FF5733', '#e0e0e0'],
-				borderWidth: 0
-			}]
-		},
-		options: {
-			rotation: -90,
-			circumference: 180,
-			cutout: '90%',
-			plugins: {
-				tooltip: { enabled: false },
-				legend: { display: false }
-			}
-		}
-	});
-
-	const temp2Chart = new Chart(temp2Ctx, {
-		type: 'doughnut',
-		data: {
-			datasets: [{
-				data: [25, 40],
-				backgroundColor: ['#33B5FF', '#e0e0e0'],
-				borderWidth: 0
-			}]
-		},
-		options: {
-			rotation: -90,
-			circumference: 180,
-			cutout: '90%',
-			plugins: {
-				tooltip: { enabled: false },
-				legend: { display: false }
-			}
-		}
-	});
-
-	const pwmChart = new Chart(pwmCtx, {
-		type: 'doughnut',
-		data: {
-			datasets: [{
-				data: [0, 255],
-				backgroundColor: ['#4CAF50', '#e0e0e0'],
-				borderWidth: 0
-			}]
-		},
-		options: {
-			rotation: -90,
-			circumference: 180,
-			cutout: '90%',
-			plugins: {
-				tooltip: { enabled: false },
-				legend: { display: false }
-			}
-		}
-	});
-
-	document.getElementById('temp1').innerText = _i.i;
-	document.getElementById('temp2').innerText = _i.e;
-	document.getElementById('fan-percent').innerText = Math.round(_i.f / 255 * 10000) / 100;
-	updateTemp1Chart(_i.i);
-	updateTemp2Chart(_i.e);
-	updatePwmChart(_i.f);
-
-	const modeUpdate = (auto) => {
-		if (auto) {
-			autoButton.classList.add('highlight');
-			autoButton.disabled = true;
-			manualButton.disabled = false;
-			manualButton.classList.remove('highlight');
-			modeInput.value = 'auto';
-		} else {
-			manualButton.classList.add('highlight');
-			manualButton.disabled = true;
-			autoButton.classList.remove('highlight');
-			autoButton.disabled = false;
-			modeInput.value = 'manual';
-		}
-	}
-	modeUpdate(_i.a == 1); 
+	container.appendChild(lcd);
+	d.body.appendChild(container);
+	updateValue(_i);
 };
+const updateValue = (data, flag) => {
+	updateChart('temp1Chart', data.i, flag);
+	updateChart('temp2Chart', data.e, flag);
+	updateChart('pwmChart', data.r1 == 1 ? 0 : data.f, flag);
+	modeUpdate(data.a == 1);
+}
 
-setInterval(function() {
-	fetch('/json')
-		.then(response => response.json())
-		.then(data => {
-			const { i, e, f, a } = data;
-			document.getElementById('temp1').innerText = i;
-			document.getElementById('temp2').innerText = e;
-			document.getElementById('fan-percent').innerText = Math.round(f / 255 * 10000) / 100;
-			updateTemp1Chart(i);
-			updateTemp2Chart(e);
-			updatePwmChart(f);
-			modeUpdate(a == 1);
+const modeUpdate = (auto) => {
+	const modeInput = d.querySelector(`[name="mode"][value="${auto ? 'auto' : 'manual'}"]`);
+	modeInput.check = true;
+	modeInput.nextElementSibling.click();
+	dgID('flap').children[0].textContent = modeInput.nextElementSibling.textContent;
+}
+
+const temperatureToColor = (temperature, coolTemp = 35, hotTemp = 45) => {
+	temperature = Math.max(coolTemp, Math.min(hotTemp, temperature));
+	const factor = (temperature - coolTemp) / (hotTemp - coolTemp);
+	const hue = (1 - factor) * 240; // 240 degrees is blue, 0 degrees is red
+	const rgb = hsvToRgb(hue, 1, 1); // Full saturation and value
+	return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+  }
+  
+  function hsvToRgb(h, s, v) {
+	let r, g, b;
+  
+	const i = Math.floor(h / 60);
+	const f = h / 60 - i;
+	const p = v * (1 - s);
+	const q = v * (1 - f * s);
+	const t = v * (1 - (1 - f) * s);
+  
+	switch (i % 6) {
+	  case 0: r = v, g = t, b = p; break;
+	  case 1: r = q, g = v, b = p; break;
+	  case 2: r = p, g = v, b = t; break;
+	  case 3: r = p, g = q, b = v; break;
+	  case 4: r = t, g = p, b = v; break;
+	  case 5: r = v, g = p, b = q; break;
+	}
+  
+	return {
+	  r: Math.round(r * 255),
+	  g: Math.round(g * 255),
+	  b: Math.round(b * 255)
+	};
+  }
+
+function getColorForPwm(value) {
+	const red = Math.min(255, Math.floor(255 * value / 255));
+	const green = Math.min(255, Math.floor(255 * (255 - value) / 255));
+	return `rgb(${red},${green},0)`;
+}
+
+const updateChart = (id, value, update = false) => {
+	const map = {
+		temp1Chart: {
+			data: [30, 45],
+			backgroundColor: ['#FF5733', '#e0e0e0'],
+			innerText: v => `${v}°C`,
+			label: 'temp1Label',
+			color: temperatureToColor(value)
+		},
+		temp2Chart: {
+			data: [30, 45],
+			backgroundColor: ['#33B5FF', '#e0e0e0'],
+			innerText: v => `${v}°C`,
+			label: 'temp2Label',
+			color: temperatureToColor(value)
+		},
+		pwmChart: {
+			data: [0, 255],
+			backgroundColor: ['#4CAF50', '#e0e0e0'],
+			innerText: v => `${Math.round(v / 255 * 10000) / 100}%`,
+			label: 'fanPercentLabel',
+			color: temperatureToColor(value, 0, 255)
+		}
+	}
+
+	if (!update) {
+		const temp1Ctx = dgID(id).getContext('2d');
+		window[id] = new Chart(temp1Ctx, {
+			type: 'doughnut',
+			data: {
+				datasets: [{
+					data: map[id].data,
+					backgroundColor: map[id].backgroundColor,
+					borderWidth: 0
+				}]
+			},
+			options: {
+				rotation: -90,
+				circumference: 180,
+				cutout: '90%',
+				plugins: {
+					tooltip: { enabled: false },
+					legend: { display: false }
+				}
+			}
+		});
+	}
+
+	window[id].data.datasets[0].backgroundColor[0] = map[id].color;
+	window[id].data.datasets[0].data[0] = value;
+	window[id].data.datasets[0].data[1] = map[id].data[1] - value;
+	window[id].update();
+	dgID(map[id].label).innerText = map[id].innerText(value);
+}
+
+setInterval(function () {
+	fetch('http://192.168.1.50/json')
+		.then(response => response.text())
+		.then(d => {
+			const data = JSON.parse(`${d.replace(/([a-z0-9]+):/g, '"$1": ')}`)
+			updateValue(data, true);
 		})
 }, 5000);
 
 document.addEventListener('DOMContentLoaded', main);
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Create a <style> element
-    const styleElement = document.createElement('style');
-    document.head.appendChild(styleElement);
+	// Create a <style> element
+	const styleElement = cE('style');
+	document.head.appendChild(styleElement);
 
-    // Define CSS rules as strings
-    const css = `
+	// Define CSS rules as strings
+	const css = `
+		:root {
+			--accent: #04da97;
+			--border-width: 6px;
+			--border-radius: 55px;
+		}
+		*{
+			margin: 0;
+			padding: 0;
+		}
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+			margin: 20px;
             background-color: #f0f0f0;
         }
 
         .container {
-            max-width: 600px;
+            width: 600px;
             margin: 0 auto;
             background-color: white;
             padding: 20px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-
+		.flex-box {
+			display: flex;
+			margin-bottom: 10px;
+		}
         h1 {
             text-align: center;
         }
@@ -362,7 +363,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         #pwm-slider {
-            width: 100%;
+            width: calc(100% - 200px);
+			margin-left: 10px;
         }
 
         .chart-container {
@@ -375,6 +377,12 @@ document.addEventListener('DOMContentLoaded', function () {
             position: relative;
             width: 150px;
             height: 150px;
+        }
+
+		.full.chart-wrapper {
+            position: relative;
+            width: calc(100vw - 80px);
+            height: 100vh;
         }
 
         .chart-wrapper canvas {
@@ -390,104 +398,107 @@ document.addEventListener('DOMContentLoaded', function () {
             font-size: 1.2rem;
             pointer-events: none;
         }
-		button.highlight {
-			transform: translateY(1px); 
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
-			background-color: white;
-			border-color: green;
-			color: green;
-			padding-left: 30px;
-		}
-		button.highlight::before {
-			content: "";
-			background-color: transparent;
-			position: absolute;
-			left: 10px;
-			top: 10px;
-			width: 5px;
-			border-bottom: 3px solid #4D7C2A;
-			height: 11px;
-			border-right: 3px solid #4D7C2A;
-			transform: rotate(45deg);
-			-o-transform: rotate(45deg);
-			-ms-transform: rotate(45deg);
-			-webkit-transform: rotate(45deg);
-		}
 		button {
 			padding: 10px 20px;
             font-size: 16px;
             font-weight: bold;
             text-transform: uppercase;
             color: #ffffff;
-            background-color: #007bff;
+            background-color: var(--accent);
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s ease;}
+            transition: background-color 0.3s ease;
+		}
+		.toggle {
+			position: relative;
+			border: solid var(--border-width) var(--accent);
+			border-radius: var(--border-radius);
+			transition: transform cubic-bezier(0, 0, 0.30, 2) .4s;
+			transform-style: preserve-3d;
+			perspective: 800px;
+			width: 170px;
+		}
+
+		.toggle>input[type="radio"] {
+			display: none;
+		}
+
+		.toggle>#choice1:checked~#flap {
+			transform: rotateY(-180deg);
+		}
+
+		.toggle>#choice1:checked~#flap>.content {
+			transform: rotateY(-180deg);
+		}
+
+		.toggle>#choice2:checked~#flap {
+			transform: rotateY(0deg);
+		}
+
+		.toggle>label {
+			display: inline-block;
+			min-width: 75px;
+			padding: 5px;
+			font-size: var(--font-size);
+			text-align: center;
+			color: var(--accent);
+			cursor: pointer;
+		}
+
+		.toggle>label,
+		.toggle>#flap {
+			font-weight: bold;
+			text-transform: capitalize;
+		}
+
+		.toggle>#flap {
+			position: absolute;
+			top: calc( 0px - var(--border-width));
+			left: 50%;
+			height: calc(100% + var(--border-width) * 2);
+			width: 50%;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			font-size: var(--font-size);
+			background-color: var(--accent);
+			border-top-right-radius: var(--border-radius);
+			border-bottom-right-radius: var(--border-radius);
+			transform-style: preserve-3d;
+			transform-origin: left;
+			transition: transform cubic-bezier(0.4, 0, 0.2, 1) .5s;
+		}
+
+		.toggle>#flap>.content {
+			color: #333;
+			transition: transform 0s linear .25s;
+			transform-style: preserve-3d;
+		}
+		@media only screen and (max-width: 1100px) {
+			.container {
+				width: calc(100vw - 80px);
+			}
+			.chart-wrapper {
+				position: relative;
+				width: 45%;
+				height: auto;
+			}
+			.temperature-values{
+				flex-direction: column;
+			    justify-content: left;
+    			align-items: start;
+				margin-top: 40px;
+				margin-bottom: 0px;
+			}
+			.chart-container {
+				flex-wrap: wrap;
+			}
+		}
     `;
 
-    // Set the CSS text of the <style> element
-    styleElement.appendChild(document.createTextNode(css));
-	const chartButton = document.createElement('button');
-	chartButton.textContent = 'Draw Chart';
-	chartButton.addEventListener('click', function () {
-		const labels = data.map(item => item.timestamp);
-		const temp1Data = data.map(item => item.i);
-		const temp2Data = data.map(item => item.e);
-		const fanSpeedData = data.map(item => item.f);
-		const modeData = data.map(item => item.a);
-		const ctx = document.getElementById('lineChart').getContext('2d');
-		const lineChart = new Chart(ctx, {
-			type: 'line',
-			data: {
-				labels: labels,
-				datasets: [
-					{
-						label: 'Inverter',
-						data: temp1Data,
-						borderColor: 'red',
-						fill: false
-					},
-					{
-						label: 'Environment',
-						data: temp2Data,
-						borderColor: 'blue',
-						fill: false
-					},
-					{
-						label: 'Fan Speed',
-						data: fanSpeedData,
-						borderColor: 'green',
-						fill: false
-					},
-					{
-						label: 'Mode',
-						data: modeData,
-						borderColor: 'orange',
-						fill: false
-					}
-				]
-			},
-			options: {
-				responsive: true,
-				scales: {
-					x: {
-						display: true,
-						title: {
-							display: true,
-							text: 'Timestamp'
-						}
-					},
-					y: {
-						display: true,
-						title: {
-							display: true,
-							text: 'Value'
-						}
-					}
-				}
-			}
-		});
-	});
-	container.appendChild(chartButton);
+	// Set the CSS text of the <style> element
+	styleElement.appendChild(document.createTextNode(css));
 });
+
+
