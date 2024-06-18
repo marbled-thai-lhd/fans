@@ -28,6 +28,8 @@ db.connect((err) => {
       e DECIMAL(4,2),
       f INT,
       a INT,
+      r1 TINYINT,
+      r2 TINYINT,
       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `;
@@ -40,18 +42,17 @@ db.connect((err) => {
 // Route to handle saving data
 app.get('/', (req, res) => {
   const data = `${req.query.data.replace(/([a-z0-9]+):/g, '"$1": ')}`;
-  console.log(data)
   if (!data) {
     return res.status(400).json({ error: 'No data provided' });
   }
   
   try {
-    const jsonData = JSON.parse(data);
+    const {i, e, f, a, r1, r2} = JSON.parse(data);
     
     // Save data to database with timestamp in UTC+7
     const timestamp = moment().tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss');
-    const insertQuery = 'INSERT INTO logs (i, e, f, a, timestamp) VALUES (?, ?, ?, ?, ?)';
-    db.query(insertQuery, [jsonData.i, jsonData.e, jsonData.f, jsonData.a, timestamp], (err, result) => {
+    const insertQuery = 'INSERT INTO logs (i, e, f, a, r1, r2, timestamp) VALUES (?, ?, ?, ?, ?)';
+    db.query(insertQuery, [i, e, f, a, r1, r2, timestamp], (err, result) => {
       if (err) {
         console.error('Error inserting data:', err);
         return res.status(500).json({ error: 'Database error' });
