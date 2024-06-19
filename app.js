@@ -51,7 +51,7 @@ app.get('/', (req, res) => {
     
     // Save data to database with timestamp in UTC+7
     const timestamp = moment().tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss');
-    const insertQuery = 'INSERT INTO logs (i, e, f, a, r1, r2, timestamp) VALUES (?, ?, ?, ?, ?)';
+    const insertQuery = 'INSERT INTO logs (i, e, f, a, r1, r2, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)';
     db.query(insertQuery, [i, e, f, a, r1, r2, timestamp], (err, result) => {
       if (err) {
         console.error('Error inserting data:', err);
