@@ -68,7 +68,7 @@ app.get('/max-min', (req, res) => {
   // Return today's data
   const todayStart = moment().startOf('day').format('YYYY-MM-DD HH:mm:ss');
   const todayEnd = moment().endOf('day').format('YYYY-MM-DD HH:mm:ss');
-  const selectQuery = 'SELECT max(i) as mxi, min(i) as mni, max(e) as me, min(e) as mne FROM logs WHERE timestamp >= ? AND timestamp <= ?';
+  const selectQuery = 'SELECT max(i) as mxi, min(i) as mni, max(e) as mxe, min(e) as mne FROM logs WHERE timestamp >= ? AND timestamp <= ?';
   db.query(selectQuery, [todayStart, todayEnd], (err, results) => {
   if (err) {
     console.error('Error fetching data:', err);
