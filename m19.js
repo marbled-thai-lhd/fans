@@ -319,7 +319,7 @@ setInterval(function () {
 	fetch('http://192.168.1.50/json')
 		.then(response => response.text())
 		.then(d => {
-			const data = JSON.parse(`${d.replace(/([a-z0-9]+):/g, '"$1": ')}`)
+			const data = JSON.parse(`${d.replace(/([a-z0-9]+):/g, '"$1": ').replace('nan', 0)}`)
 			updateValue(data, true);
 		})
 }, 5000);
@@ -540,3 +540,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
+const url = new URL(window.location);
+const params = new URLSearchParams(url.search);
+params.forEach(e => params.delete(e))
+window.history.replaceState({}, document.title, url.pathname);
