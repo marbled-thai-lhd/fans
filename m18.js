@@ -309,7 +309,8 @@ const updateChart = (id, value, update = false) => {
 	const {min, max} = window[id].options;
 
 	window[id].data.datasets[0].backgroundColor[0] = map[id].color;
-	window[id].data.datasets[0].data[0] = ((value - min) / (max - min)) * 100;
+	window[id].data.datasets[0].data[0] = id == 'pwmChart' ? (value / 2.55) : ((value - min) / (max - min)) * 100;
+	window[id].data.datasets[0].data[1] = max -  window[id].data.datasets[0].data[0];
 	window[id].update();
 	dgID(map[id].label).innerText = map[id].innerText(value);
 }
@@ -493,6 +494,22 @@ document.addEventListener('DOMContentLoaded', function () {
 			transform-style: preserve-3d;
 		}
 		@media only screen and (max-width: 1100px) {
+			button {
+				font-size: 30px;
+				padding: 20px;
+			}
+			.toggle>label, .toggle>#flap {
+				font-size: 30px;
+			}
+			#control-buttons {
+				margin-bottom: 20px;
+			}
+			.toggle>label {
+				min-width: 180px;
+			}
+			.toggle {
+				width: 550px;
+			}
 			.container {
 				width: calc(100vw - 80px);
 			}
@@ -510,6 +527,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 			.chart-container {
 				flex-wrap: wrap;
+			}
+			.full.chart-wrapper {
+				width: 500vw;
+				height: auto:
 			}
 		}
     `;
