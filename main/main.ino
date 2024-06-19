@@ -43,6 +43,7 @@ float am2302Temp = 0.0;
 unsigned long lastUpdate = 0; // Store the last update time
 unsigned long lightOffAt = 0;
 unsigned long lostTempAt = 0;
+unsigned long logedAt = 0;
 
 // Helper function to map temperature to PWM
 int temperatureToPWM(float tempC)
@@ -208,6 +209,8 @@ String htmlGenarator(bool jsonOnly)
   json += r1Value;
   json += ",jv:";
   json += jsVersion;
+  json += ",l:";
+  json += logOn;
   json += "}";
 
   if (jsonOnly) return json;
@@ -262,20 +265,20 @@ void pinHandler()
     screenOn = false;
     lcd.clear();
   }
+  if (logOn && (logedAt == 0 || currentMillis - logedAt >= 30)) {
+  // try {
+    WiFiClient client;
+    HTTPClient http;
+    String url = "http://192.168.1.177:3000/?data=" + htmlGenarator(true);
+    http.begin(client, url);
+    int httpCode = http.GET();
+    http.end();
+  // } catch (const std::exception& e) {
+  // }
+  }
   if (currentMillis - lastUpdate >= 5000)
   {
     lastUpdate = currentMillis;
-    if (logOn) {
-    // try {
-      WiFiClient client;
-      HTTPClient http;
-      String url = "http://192.168.1.177:3000/?data=" + htmlGenarator(true);
-      http.begin(client, url);
-      int httpCode = http.GET();
-      http.end();
-    // } catch (const std::exception& e) {
-    // }
-    }
     if (autoMode)
     {
       pwmValue = temperatureToPWM(ds18b20Temp);

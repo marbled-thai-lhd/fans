@@ -188,12 +188,26 @@ const main = function () {
 	container.appendChild(lcd);
 	d.body.appendChild(container);
 	updateValue(_i);
+	fetch('http://192.168.1.177:3000/max-min')
+	.then(response => response.json())
+	.then(data => {
+		data = data[0];
+		window['temp1Chart'].options.max = data.mxi + 0.5;
+		window['temp1Chart'].options.min = data.mni - 0.5;
+		window['temp1Chart'].update();
+		window['temp2Chart'].options.max = data.mxe + 0.5;
+		window['temp2Chart'].options.min = data.mne - 0.5;
+		window['temp2Chart'].update();
+	});
+	([lblFor1, lblFor2]).forEach(e => e.addEventListener('click', e => setTimeout(() => {
+		dgID('flap').children[0].textContent = e.target.textContent;
+	}, 200)));
 };
 const updateValue = (data, flag) => {
 	updateChart('temp1Chart', data.i, flag);
 	updateChart('temp2Chart', data.e, flag);
 	updateChart('pwmChart', data.r1 == 1 ? 0 : data.f, flag);
-	modeUpdate(data.a == 1);
+	if (!flag) modeUpdate(data.a == 1);
 }
 
 const modeUpdate = (auto) => {
@@ -211,30 +225,30 @@ const temperatureToColor = (temperature, coolTemp = 35, hotTemp = 45) => {
 	return `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
   }
   
-  function hsvToRgb(h, s, v) {
-	let r, g, b;
-  
-	const i = Math.floor(h / 60);
-	const f = h / 60 - i;
-	const p = v * (1 - s);
-	const q = v * (1 - f * s);
-	const t = v * (1 - (1 - f) * s);
-  
-	switch (i % 6) {
-	  case 0: r = v, g = t, b = p; break;
-	  case 1: r = q, g = v, b = p; break;
-	  case 2: r = p, g = v, b = t; break;
-	  case 3: r = p, g = q, b = v; break;
-	  case 4: r = t, g = p, b = v; break;
-	  case 5: r = v, g = p, b = q; break;
-	}
-  
-	return {
-	  r: Math.round(r * 255),
-	  g: Math.round(g * 255),
-	  b: Math.round(b * 255)
-	};
-  }
+function hsvToRgb(h, s, v) {
+let r, g, b;
+
+const i = Math.floor(h / 60);
+const f = h / 60 - i;
+const p = v * (1 - s);
+const q = v * (1 - f * s);
+const t = v * (1 - (1 - f) * s);
+
+switch (i % 6) {
+	case 0: r = v, g = t, b = p; break;
+	case 1: r = q, g = v, b = p; break;
+	case 2: r = p, g = v, b = t; break;
+	case 3: r = p, g = q, b = v; break;
+	case 4: r = t, g = p, b = v; break;
+	case 5: r = v, g = p, b = q; break;
+}
+
+return {
+	r: Math.round(r * 255),
+	g: Math.round(g * 255),
+	b: Math.round(b * 255)
+};
+}
 
 function getColorForPwm(value) {
 	const red = Math.min(255, Math.floor(255 * value / 255));
@@ -245,21 +259,21 @@ function getColorForPwm(value) {
 const updateChart = (id, value, update = false) => {
 	const map = {
 		temp1Chart: {
-			data: [30, 45],
+			data: [0, 100],
 			backgroundColor: ['#FF5733', '#e0e0e0'],
 			innerText: v => `${v}°C`,
 			label: 'temp1Label',
 			color: temperatureToColor(value)
 		},
 		temp2Chart: {
-			data: [30, 45],
+			data: [0, 100],
 			backgroundColor: ['#33B5FF', '#e0e0e0'],
 			innerText: v => `${v}°C`,
 			label: 'temp2Label',
 			color: temperatureToColor(value)
 		},
 		pwmChart: {
-			data: [0, 255],
+			data: [0, 100],
 			backgroundColor: ['#4CAF50', '#e0e0e0'],
 			innerText: v => `${Math.round(v / 255 * 10000) / 100}%`,
 			label: 'fanPercentLabel',
@@ -279,20 +293,23 @@ const updateChart = (id, value, update = false) => {
 				}]
 			},
 			options: {
+				max: map[id].data[1],
+				min: map[id].data[0],
 				rotation: -90,
 				circumference: 180,
-				cutout: '90%',
+				cutout: '80%',
 				plugins: {
 					tooltip: { enabled: false },
 					legend: { display: false }
-				}
+				},
 			}
 		});
 	}
 
+	const {min, max} = window[id].options;
+
 	window[id].data.datasets[0].backgroundColor[0] = map[id].color;
-	window[id].data.datasets[0].data[0] = value;
-	window[id].data.datasets[0].data[1] = map[id].data[1] - value;
+	window[id].data.datasets[0].data[0] = ((value - min) / (max - min)) * 100;
 	window[id].update();
 	dgID(map[id].label).innerText = map[id].innerText(value);
 }
@@ -316,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	// Define CSS rules as strings
 	const css = `
 		:root {
-			--accent: #04da97;
+			--accent: #3498db;
 			--border-width: 6px;
 			--border-radius: 55px;
 		}
