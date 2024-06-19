@@ -31,7 +31,7 @@ db.connect((err) => {
       r1 TINYINT,
       r2 TINYINT,
       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
+    );
   `;
   db.query(createTableQuery, (err, result) => {
     if (err) throw err;
@@ -55,7 +55,7 @@ app.get('/', (req, res) => {
     db.query(insertQuery, [i, e, f, a, r1, r2, timestamp], (err, result) => {
       if (err) {
         console.error('Error inserting data:', err);
-        return res.status(500).json({ error: 'Database error' });
+        return res.status(500).json({ error: 'Database error', err });
       }
       res.status(200).json({ message: 'Data saved successfully' });
     });
@@ -63,6 +63,20 @@ app.get('/', (req, res) => {
     res.status(400).json({ error: 'Invalid JSON format' });
   }
 });
+
+app.get('/max-min', () => {
+  // Return today's data
+  const todayStart = moment().startOf('day').format('YYYY-MM-DD HH:mm:ss');
+  const todayEnd = moment().endOf('day').format('YYYY-MM-DD HH:mm:ss');
+  const selectQuery = 'SELECT max(i) as mxi, min(i) as mni, max(e) as me, min(e) as mne FROM logs WHERE timestamp >= ? AND timestamp <= ?';
+  db.query(selectQuery, [todayStart, todayEnd], (err, results) => {
+  if (err) {
+    console.error('Error fetching data:', err);
+    return res.status(500).json({ error: 'Database error' });
+  }
+  res.status(200).json(results);
+  });
+})
 
 // Route to return data from logs table
 app.get('/json', (req, res) => {
