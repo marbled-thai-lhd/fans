@@ -335,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	const css = `
 		:root {
 			--accent: #3498db;
-			--border-width: 6px;
+			--border-width: 3px;
 			--border-radius: 55px;
 		}
 		*{
