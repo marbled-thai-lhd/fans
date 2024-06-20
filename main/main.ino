@@ -12,16 +12,16 @@
 #include <ESP8266HTTPClient.h> 
 
 // Pin assignments
-const int DS18B20_PIN = 14; // GPIO14 (1)
+const int DS18B20_PIN = 14; // GPIO14 (D5)
 const int DHT22_PIN = 12;   // GPIO12 (D6)
-const int RELAY1_PIN = 3;   // GPIO1 (RX)
+const int RELAY1_PIN = 3;   // GPIO3  (RX)
 const int RELAY2_PIN = 13;  // GPIO13 (D7)
 const int PWM1_PIN = 15;    // GPIO15 (D8)
-const int PWM2_PIN = 2;     // GPIO2 (D4)
-const int PWM3_PIN = 0;     // GPIO0 (D3)
+const int PWM2_PIN = 2;     // GPIO2  (D4)
+const int PWM3_PIN = 0;     // GPIO0  (D3)
 const int PWM4_PIN = 16;    // GPIO16 (D0)
-const int I2C_SDA = 4;      // GPIO4 (D2)
-const int I2C_SCL = 5;      // GPIO5 (D1)
+const int I2C_SDA = 4;      // GPIO4  (D2)
+const int I2C_SCL = 5;      // GPIO5  (D1)
 
 OneWire oneWire(DS18B20_PIN);
 DallasTemperature ds18b20(&oneWire);
@@ -44,6 +44,7 @@ unsigned long lastUpdate = 0; // Store the last update time
 unsigned long lightOffAt = 0;
 unsigned long lostTempAt = 0;
 unsigned long logedAt = 0;
+unsigned long bootAt = 0;
 
 // Helper function to map temperature to PWM
 int temperatureToPWM(float tempC)
@@ -82,11 +83,15 @@ void connectToWiFi(bool tries)
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print(WiFi.localIP());
+  bootAt = millis();
 }
 
 void setup()
 {
   Serial.begin(115200);
+  ESP.wdtDisable();  // Disable the watchdog timer (just in case)
+  ESP.wdtEnable(10000);  // Enable the watchdog timer with a 1-second timeout
+
   lcd.init();
   lcd.backlight();
   lightOffAt = millis();
@@ -130,7 +135,7 @@ void loop()
     connectToWiFi(false);
   }
   pinHandler();
-  
+  ESP.wdtFeed();
 }
 
 void serverRouteRegister()
@@ -229,7 +234,9 @@ void pinHandler()
   ds18b20.requestTemperatures();
   ds18b20Temp = ds18b20.getTempCByIndex(0);
   am2302Temp = dht.readTemperature();
-
+  if (currentMillis - bootAt > 3600000) {
+    ESP.restart();
+  }
   if (screenOn) {
     // Update LCD display
     lcd.clear();
@@ -318,3 +325,45 @@ void pinHandler()
   }
   
 }
+
+/*
++------------+---------+-------------+
+| GPIO Number| D-number| Arduino Pin |
++------------+---------+-------------+
+| GPIO0      | D3      | 0           |
++------------+---------+-------------+
+| GPIO1      | D10     | 1           |
++------------+---------+-------------+
+| GPIO2      | D4      | 2           |
++------------+---------+-------------+
+| GPIO3      | RX      | 3           |
++------------+---------+-------------+
+| GPIO4      | D2      | 4           |
++------------+---------+-------------+
+| GPIO5      | D1      | 5           |
++------------+---------+-------------+
+| GPIO6      | NA      | 6           |
++------------+---------+-------------+
+| GPIO7      | NA      | 7           |
++------------+---------+-------------+
+| GPIO8      | NA      | 8           |
++------------+---------+-------------+
+| GPIO9      | NA      | 9           |
++------------+---------+-------------+
+| GPIO10     | NA      | 10          |
++------------+---------+-------------+
+| GPIO11     | NA      | 11          |
++------------+---------+-------------+
+| GPIO12     | D6      | 12          |
++------------+---------+-------------+
+| GPIO13     | D7      | 13          |
++------------+---------+-------------+
+| GPIO14     | D5      | 14          |
++------------+---------+-------------+
+| GPIO15     | D8      | 15          |
++------------+---------+-------------+
+| GPIO16     | D0      | 16          |
++------------+---------+-------------+
+| A0 (Analog)| A0      | A0          |
++------------+---------+-------------+
+*/
