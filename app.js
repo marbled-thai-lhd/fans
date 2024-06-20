@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql');
 const moment = require('moment-timezone');
+const http = require('http');
 const app = express();
 const port = 3000;
 
@@ -111,3 +112,11 @@ app.get('/json', (req, res) => {
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}/`);
 });
+
+
+setInterval(() => http.request({
+    hostname: '192.168.1.50',
+    port: 80,
+    path: '/?log=1',
+    method: 'GET'
+}).end(), 5 * 60 * 1000);
