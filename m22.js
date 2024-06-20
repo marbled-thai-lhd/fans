@@ -216,12 +216,13 @@ const main = function () {
 	}, 200)));
 };
 const formatTime = (seconds) => {
+	seconds = Math.round(seconds);
 	const padZero = (number) => {
 		return number.toString().padStart(2, '0');
 	}
 	const minutes = Math.floor(seconds / 60);
 	const remainingSeconds = seconds % 60;
-	return `${padZero(minutes)}:${padZero(remainingSeconds)}`.substring(0,5);
+	return `${padZero(minutes)}:${padZero(remainingSeconds)}`;
 }
 
 const updateValue = (data, flag) => {
