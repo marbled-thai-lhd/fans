@@ -32,7 +32,7 @@ EEPROMHelper<DataStruct> eepromHelper;
 ESP8266WebServer server(80);
 
 bool screenOn = true;
-bool logOn = false;
+bool logOn = true;
 bool autoMode = false;
 int pwmValue = 51;
 int r1Value = 0;
@@ -216,6 +216,10 @@ String htmlGenarator(bool jsonOnly)
   json += jsVersion;
   json += ",l:";
   json += logOn;
+  json += ",b:";
+  json += bootAt;
+  json += ",n:";
+  json += millis();
   json += "}";
 
   if (jsonOnly) return json;

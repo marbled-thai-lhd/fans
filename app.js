@@ -48,6 +48,7 @@ app.get('/', (req, res) => {
   
   try {
     const {i, e, f, a, r1, r2} = JSON.parse(data);
+    if (i > 60 || e > 60) return res.status(400).json({ error: 'Invalid JSON format' });
     
     // Save data to database with timestamp in UTC+7
     const timestamp = moment().tz('Asia/Bangkok').format('YYYY-MM-DD HH:mm:ss');

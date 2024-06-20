@@ -50,6 +50,18 @@ const main = function () {
 	chartContainer.appendChild(cW('temp2Chart', 'temp2Label'));
 	chartContainer.appendChild(cW('pwmChart', 'fanPercentLabel'));
 	container.appendChild(chartContainer);
+	const statusContainer = cE('div', null, 'status-container');
+
+	const modeContainer = cE('div', 'mode-container');
+	modeContainer.appendChild(cE('span', 'stt-mode-lbl', 'stt-mode-lbl', 'Current: '))
+	modeContainer.appendChild(cE('span', 'stt-mode', 'stt-mode', ''))
+	statusContainer.appendChild(modeContainer);
+
+	const timeContainer = cE('div', 'time-container');
+	timeContainer.appendChild(cE('span', 'stt-time-lbl', 'stt-time-lbl', 'TTL: '))
+	timeContainer.appendChild(cE('span', 'stt-time', 'stt-time', ''))
+	statusContainer.appendChild(timeContainer);
+	container.appendChild(statusContainer);
 
 	const form = cE('form', 'control-form');
 	const groupSetting = cE('div', undefined, 'flex-box')
@@ -100,7 +112,7 @@ const main = function () {
 					.reduce((acc, item) => {
 						const currentTimestamp = new Date(item.timestamp).getTime();
 						if (item.r1 == 1) item.f = 0;
-						if (acc.length === 0 || currentTimestamp >= acc[acc.length - 1].timestamp + oneMinute) {
+						if ((acc.length === 0 || currentTimestamp >= acc[acc.length - 1].timestamp + oneMinute) && item.i < 80) {
 							acc.push({ ...item, timestamp: currentTimestamp });
 						}
 						return acc;
@@ -203,10 +215,29 @@ const main = function () {
 		dgID('flap').children[0].textContent = e.target.textContent;
 	}, 200)));
 };
+const formatTime = (seconds) => {
+	const padZero = (number) => {
+		return number.toString().padStart(2, '0');
+	}
+	const minutes = Math.floor(seconds / 60);
+	const remainingSeconds = seconds % 60;
+	return `${padZero(minutes)}:${padZero(remainingSeconds)}`.substring(0,5);
+}
+
 const updateValue = (data, flag) => {
 	updateChart('temp1Chart', data.i, flag);
 	updateChart('temp2Chart', data.e, flag);
 	updateChart('pwmChart', data.r1 == 1 ? 0 : data.f, flag);
+	dgID('stt-mode').innerHTML = ['Automatic', 'Manual'][data.a];
+	if (!flag) {
+		if (window.ivl) clearInterval(window.itv);
+		let ttl = (3600 - (data.n - data.b)/ 1000);
+		dgID('stt-time').innerHTML = formatTime(ttl);
+		window.itv = setInterval(() => {
+			dgID('stt-time').innerHTML = formatTime(--ttl);
+		}, 1000)
+	}
+
 	if (!flag) modeUpdate(data.a == 1);
 }
 
@@ -388,7 +419,6 @@ document.addEventListener('DOMContentLoaded', function () {
         .chart-container {
             display: flex;
             justify-content: space-around;
-            margin-bottom: 20px;
         }
 
         .chart-wrapper {
@@ -493,10 +523,35 @@ document.addEventListener('DOMContentLoaded', function () {
 			transition: transform 0s linear .25s;
 			transform-style: preserve-3d;
 		}
+		#mode-container {
+			padding-bottom: 10px;
+		}
+		.status-container {
+			border: 2px dashed var(--accent);
+			display: inline-block;
+			border-radius: 20px;
+			padding: 10px;
+			padding-top: 20px;
+			margin-bottom: 10px;
+			position:relative;
+		}
+
+		.status-container::before {
+			content: 'status';
+			background: var(--accent);
+			color: #fff;
+			padding: 2px 15px;
+			position: absolute;
+			top: 0;
+			transform: translateY(-50%);
+		}
 		@media only screen and (max-width: 1100px) {
 			button {
 				font-size: 30px;
 				padding: 20px;
+			}
+			.status-container * {
+				font-size: 30px;
 			}
 			.chart-label {
 				font-size: 60px;
