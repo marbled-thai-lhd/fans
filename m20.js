@@ -498,6 +498,9 @@ document.addEventListener('DOMContentLoaded', function () {
 				font-size: 30px;
 				padding: 20px;
 			}
+			.chart-label {
+				font-size: 60px;
+			}
 			.toggle>label, .toggle>#flap {
 				font-size: 30px;
 			}

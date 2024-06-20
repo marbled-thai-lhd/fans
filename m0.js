@@ -309,7 +309,8 @@ const updateChart = (id, value, update = false) => {
 	const {min, max} = window[id].options;
 
 	window[id].data.datasets[0].backgroundColor[0] = map[id].color;
-	window[id].data.datasets[0].data[0] = ((value - min) / (max - min)) * 100;
+	window[id].data.datasets[0].data[0] = id == 'pwmChart' ? (value / 2.55) : ((value - min) / (max - min)) * 100;
+	window[id].data.datasets[0].data[1] = max -  window[id].data.datasets[0].data[0];
 	window[id].update();
 	dgID(map[id].label).innerText = map[id].innerText(value);
 }
@@ -318,7 +319,7 @@ setInterval(function () {
 	fetch('http://192.168.1.50/json')
 		.then(response => response.text())
 		.then(d => {
-			const data = JSON.parse(`${d.replace(/([a-z0-9]+):/g, '"$1": ')}`)
+			const data = JSON.parse(`${d.replace(/([a-z0-9]+):/g, '"$1": ').replace('nan', 0)}`)
 			updateValue(data, true);
 		})
 }, 5000);
@@ -334,7 +335,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	const css = `
 		:root {
 			--accent: #3498db;
-			--border-width: 6px;
+			--border-width: 3px;
 			--border-radius: 55px;
 		}
 		*{
@@ -493,6 +494,25 @@ document.addEventListener('DOMContentLoaded', function () {
 			transform-style: preserve-3d;
 		}
 		@media only screen and (max-width: 1100px) {
+			button {
+				font-size: 30px;
+				padding: 20px;
+			}
+			.chart-label {
+				font-size: 60px;
+			}
+			.toggle>label, .toggle>#flap {
+				font-size: 30px;
+			}
+			#control-buttons {
+				margin-bottom: 20px;
+			}
+			.toggle>label {
+				min-width: 180px;
+			}
+			.toggle {
+				width: 550px;
+			}
 			.container {
 				width: calc(100vw - 80px);
 			}
@@ -511,6 +531,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			.chart-container {
 				flex-wrap: wrap;
 			}
+			.full.chart-wrapper {
+				width: 500vw;
+				height: auto:
+			}
 		}
     `;
 
@@ -519,3 +543,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 
+const url = new URL(window.location);
+const params = new URLSearchParams(url.search);
+params.forEach(e => params.delete(e))
+window.history.replaceState({}, document.title, url.pathname);
