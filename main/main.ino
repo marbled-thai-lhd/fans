@@ -65,15 +65,21 @@ void connectToWiFi(bool tries)
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to ");
   Serial.println(WIFI_SSID);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("WIFI.");
 
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED && tries)
   {
+    digitalWrite(RELAY1_PIN, LOW); 
+    digitalWrite(RELAY2_PIN, LOW);
+
     delay(400); // wait for a second
+    digitalWrite(RELAY1_PIN, HIGH); 
+    digitalWrite(RELAY2_PIN, HIGH);
     Serial.print(".");
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("WIFI....");
+    lcd.print(".");
   }
 
   Serial.println("");
@@ -297,37 +303,46 @@ void pinHandler()
       analogWrite(PWM2_PIN, pwmValue);
       analogWrite(PWM3_PIN, pwmValue);
       analogWrite(PWM4_PIN, pwmValue);
-    }
-
-    if (ds18b20Temp != -127.00)
-    {
-      if (ds18b20Temp < 35)
-      {
-        digitalWrite(RELAY1_PIN, HIGH);
-        r1Value = HIGH;
-        digitalWrite(RELAY2_PIN, HIGH); // Turn off relay2
-        r2Value = HIGH;
-      }
-      else if (ds18b20Temp > 36.5)
-      {
+      autoSetRelay();
+    } else {
+      if (r1Value == HIGH) {
         digitalWrite(RELAY1_PIN, LOW); 
         r1Value = LOW;
-        digitalWrite(RELAY2_PIN, LOW); // Turn on relay2
+        digitalWrite(RELAY2_PIN, LOW);
         r2Value = LOW;
       }
     }
+  }
+}
 
-    if (ds18b20Temp == -127.00)
+void autoSetRelay() {
+  unsigned long currentMillis = millis();
+  if (ds18b20Temp != -127.00)
+  {
+    if (ds18b20Temp < 35)
     {
-      if (lostTempAt != 0 && currentMillis - lostTempAt > 60000) {
-        digitalWrite(RELAY2_PIN, HIGH); // Turn off relay2
-        r2Value = HIGH;
-      }
+      digitalWrite(RELAY1_PIN, HIGH);
+      r1Value = HIGH;
+      digitalWrite(RELAY2_PIN, HIGH); // Turn off relay2
+      r2Value = HIGH;
+    }
+    else if (ds18b20Temp > 36.5)
+    {
+      digitalWrite(RELAY1_PIN, LOW); 
+      r1Value = LOW;
+      digitalWrite(RELAY2_PIN, LOW); // Turn on relay2
+      r2Value = LOW;
+    }
+  } 
+  else
+  {
+    if (lostTempAt != 0 && currentMillis - lostTempAt > 60000) {
+      digitalWrite(RELAY2_PIN, HIGH); // Turn off relay2
+      r2Value = HIGH;
     } else {
       lostTempAt = 0;
     }
   }
-  
 }
 
 /*

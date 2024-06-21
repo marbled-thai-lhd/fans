@@ -50,8 +50,10 @@ const main = function () {
 	chartContainer.appendChild(cW('temp2Chart', 'temp2Label'));
 	chartContainer.appendChild(cW('pwmChart', 'fanPercentLabel'));
 	container.appendChild(chartContainer);
-	const statusContainer = cE('div', null, 'status-container');
 
+	const flexStatus = cE('div', 'flex-div');
+
+	const statusContainer = cE('div', null, 'status-container');
 	const modeContainer = cE('div', 'mode-container');
 	modeContainer.appendChild(cE('span', 'stt-mode-lbl', 'stt-mode-lbl', 'Current: '))
 	modeContainer.appendChild(cE('span', 'stt-mode', 'stt-mode', ''))
@@ -61,7 +63,33 @@ const main = function () {
 	timeContainer.appendChild(cE('span', 'stt-time-lbl', 'stt-time-lbl', 'TTL: '))
 	timeContainer.appendChild(cE('span', 'stt-time', 'stt-time', ''))
 	statusContainer.appendChild(timeContainer);
-	container.appendChild(statusContainer);
+	flexStatus.appendChild(statusContainer);
+
+	const relayContainer = cE('div', null, 'relay-container');
+	const r1Container = cE('div', 'r1-container');
+	r1Container.appendChild(cE('span', 'stt-r1-lbl', 'stt-r1-lbl', 'Power: '))
+	r1Container.appendChild(cE('span', 'stt-r1', 'stt-r1', ''))
+	relayContainer.appendChild(r1Container);
+
+	const r2Container = cE('div', 'time-container');
+	r2Container.appendChild(cE('span', 'stt-r2-lbl', 'stt-r2-lbl', 'PWM: '))
+	r2Container.appendChild(cE('span', 'stt-r2', 'stt-r2', ''))
+	relayContainer.appendChild(r2Container);
+	flexStatus.appendChild(relayContainer);
+
+	const logVersionContainer = cE('div', null, 'logVersion-container');
+	const logContainer = cE('div', 'log-container');
+	logContainer.appendChild(cE('span', 'stt-log-lbl', 'stt-log-lbl', 'Log: '))
+	logContainer.appendChild(cE('span', 'stt-log', 'stt-log', ''))
+	logVersionContainer.appendChild(logContainer);
+
+	const versionContainer = cE('div', 'time-container');
+	versionContainer.appendChild(cE('span', 'stt-version-lbl', 'stt-version-lbl', 'Version: '))
+	versionContainer.appendChild(cE('span', 'stt-version', 'stt-version', ''))
+	logVersionContainer.appendChild(versionContainer);
+	flexStatus.appendChild(logVersionContainer);
+	
+	container.appendChild(flexStatus);
 
 	const form = cE('form', 'control-form');
 	const groupSetting = cE('div', undefined, 'flex-box')
@@ -229,7 +257,7 @@ const updateValue = (data, flag) => {
 	updateChart('temp1Chart', data.i, flag);
 	updateChart('temp2Chart', data.e, flag);
 	updateChart('pwmChart', data.r1 == 1 ? 0 : data.f, flag);
-	dgID('stt-mode').innerHTML = ['Automatic', 'Manual'][data.a];
+	dgID('stt-mode').innerHTML = ['Manual', 'Automatic'][data.a];
 	if (!flag) {
 		if (window.ivl) clearInterval(window.itv);
 		let ttl = (3600 - (data.n - data.b)/ 1000);
@@ -238,6 +266,11 @@ const updateValue = (data, flag) => {
 			dgID('stt-time').innerHTML = formatTime(--ttl);
 		}, 1000)
 	}
+	dgID('stt-r1').innerHTML = ['ON', 'OFF'][data.r1];
+	dgID('stt-r2').innerHTML = ['ON', 'OFF'][data.r2];
+
+	dgID('stt-log').innerHTML = ['OFF', 'ON'][data.l];
+	dgID('stt-version').innerHTML = `v${data.jv}`;
 
 	if (!flag) modeUpdate(data.a == 1);
 }
@@ -401,7 +434,12 @@ document.addEventListener('DOMContentLoaded', function () {
             justify-content: space-between;
             margin-bottom: 20px;
         }
-
+		#flex-div {
+			display: flex;
+			justify-content: space-around;
+			align-content: space-around;
+			align-items: stretch;
+		}
         .control-buttons {
             display: flex;
             justify-content: space-around;
@@ -524,10 +562,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			transition: transform 0s linear .25s;
 			transform-style: preserve-3d;
 		}
-		#mode-container {
+		#mode-container, #r1-container, #log-container {
 			padding-bottom: 10px;
 		}
-		.status-container {
+		.status-container, .relay-container, .logVersion-container {
 			border: 2px dashed var(--accent);
 			display: inline-block;
 			border-radius: 20px;
@@ -535,10 +573,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			padding-top: 20px;
 			margin-bottom: 10px;
 			position:relative;
+			width: 27%;
 		}
 
-		.status-container::before {
-			content: 'status';
+		.status-container::before, .relay-container::before, .logVersion-container::before {
 			background: var(--accent);
 			color: #fff;
 			padding: 2px 15px;
@@ -546,12 +584,21 @@ document.addEventListener('DOMContentLoaded', function () {
 			top: 0;
 			transform: translateY(-50%);
 		}
+		.status-container::before {
+			content: 'status';
+		}
+		.relay-container::before {
+			content: 'power';
+		}
+		.logVersion-container::before {
+			content: 'other';
+		}
 		@media only screen and (max-width: 1100px) {
 			button {
 				font-size: 30px;
 				padding: 20px;
 			}
-			.status-container * {
+			#flex-div * {
 				font-size: 30px;
 			}
 			.chart-label {
@@ -590,6 +637,14 @@ document.addEventListener('DOMContentLoaded', function () {
 			.full.chart-wrapper {
 				width: 500vw;
 				height: auto:
+			}
+			#flex-div {
+				flex-direction: column;
+				align-items: center;
+			}
+			#flex-div > * {
+				width: 95%;
+				margin-bottom: 30px;
 			}
 		}
     `;
