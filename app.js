@@ -68,7 +68,11 @@ app.get('/', (req, res) => {
 
 app.get('/max-min', (req, res) => {
   // Return today's data
-  const selectQuery = 'SELECT max(i) as mxi, min(i) as mni, max(e) as mxe, min(e) as mne FROM logs';
+  const selectQuery = `
+    SELECT max(i) as mxi, min(i) as mni, max(e) as mxe, min(e) as mne 
+    FROM logs 
+    where e between 20 and 50
+    and i between 20 and 60`;
   db.query(selectQuery, [], (err, results) => {
   if (err) {
     console.error('Error fetching data:', err);
