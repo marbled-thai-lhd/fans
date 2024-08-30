@@ -40,8 +40,20 @@ db.connect((err) => {
   });
 });
 
+const cleanUp = () => {
+  // Auto clean data older than 7 days
+  const cleanQuery = 'DELETE FROM logs WHERE timestamp < NOW() - INTERVAL 7 DAY';
+  db.query(cleanQuery, (err, result) => {
+    if (err) {
+      console.error('Error cleaning data:', err);
+    }
+    console.log('Data older than 7 days deleted.');
+  });
+}
+
 // Route to handle saving data
 app.get('/', (req, res) => {
+  cleanUp();
   const data = `${req.query.data.replace(/([a-z0-9]+):/g, '"$1": ')}`;
   if (!data) {
     return res.status(400).json({ error: 'No data provided' });
@@ -118,7 +130,7 @@ app.listen(port, () => {
 });
 
 
-setInterval(() => http.request({
+setInterval(() => cleanUp() || http.request({
     hostname: '192.168.1.50',
     port: 80,
     path: '/?log=1',
